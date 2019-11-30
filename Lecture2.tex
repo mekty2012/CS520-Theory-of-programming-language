@@ -1,0 +1,409 @@
+\documentclass{article}[12pt]
+
+\usepackage{mathtools,enumitem,amssymb,amsmath,kotex,amsfonts,listings,stmaryrd,amsthm}
+\usepackage{xfrac,txfonts}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{ebproof}
+\usepackage{tikz}
+
+\usetikzlibrary{trees}
+\usetikzlibrary{cd}
+\begin{document}
+
+\newtheoremstyle{break}
+  {\topsep}{\topsep}%
+  {\itshape}{}%
+  {\bfseries}{}%
+  {\newline}{}%
+
+\theoremstyle{break}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\newtheorem{lemma}{Lemma}
+\newtheorem{example}{Example}
+\newcommand{\nonterminal}[1]{\langle \text{#1}\rangle}
+\newcommand{\rem}[0]{\text{ rem }}
+
+\title{CS520 Lecture 2}
+\Large
+\maketitle
+
+\section{Motivation or Objective}
+1. Learn four key tools in PL that will be used throughout this course \\
+\begin{enumerate}
+    \item Abstract Syntax
+    \item Denotational Semantics
+    \item Inference rule
+    \item Binding
+\end{enumerate}
+2. Learn the basics of predicate logic (or first-order logic)\\
+3. We plan to go through some of (1)-(4) twice, first using integer expressions and then using predicate logic.\\
+\section{Integer Expressions}
+1. How to analyze integer expressions found in logic and programming languages mathematically? We will first have to define the syntax and the semantics for them. \\
+2. Examples : $x+3\times y, x\div 2 + x \times x$\\
+3. We also want sto develop mathematical tools to reason about or manipulate integer expressions
+\section{Abstract Syntax and Initial Algebra}
+1. Abstract Syntax \\
+Specification of \underline{abstract phrases}\footnote{Vague words, but will be made rigorous when we define initial algebra} in a formal language, such as the language of integer expressions and predicte logics. \\
+2. Typically, we use \underline{abstract grammar}\footnote{Not accurate, but good approximate view. \\(1) grammar without any concren on parsing or surface syntax \\(2) In this case, parse trees in the grammar are abstract phrases} to describe abstract syntax. \\
+3. Abstract grammar for integer expressions: \\
+\begin{align*}
+    \nonterminal{intexp}&::=0 | 1 | 2 | \ldots \\
+    &| \nonterminal{var} | -\nonterminal{intexp} | \nonterminal{intexp} + \nonterminal{intexp} \\
+    &| \nonterminal{intexp} - \nonterminal{intexp} | \nonterminal{intexp} \times \nonterminal{intexp} \\
+    &| \nonterminal{intexp} \div \nonterminal{intexp} | \nonterminal{intexp} \rem \nonterminal{intexp}
+\end{align*}
+(abstract) Integer expressions are finite derivation trees in this grammar. For instance, \\
+\begin{figure}
+    \begin{tikzpicture}[level distance=1.5cm,
+          level 1/.style={sibling distance=3cm},
+          level 2/.style={sibling distance=1.5cm}]
+          \node {+}
+            child {node {x}}
+            child {node {$\times$}
+              child {node {3}}
+              child {node {y}}
+            };
+        \end{tikzpicture}
+        \begin{tikzpicture}[level distance=1.5cm,
+          level 1/.style={sibling distance=3cm},
+          level 2/.style={sibling distance=1.5cm}]
+          \node {+}
+            child {node {$\div$}
+              child {node {x}}
+              child {node {2}}
+            }
+            child {node {$\times$}
+              child {node {x}}
+              child {node {x}}
+            };
+        \end{tikzpicture}
+    \caption{Finite derivation trees for integer expressions}
+\end{figure}
+Note that infinite trees are not included. \\
+4. A more accurate views is to view abstract syntax as an initial algebra. This view will help us to see why we can define various operations on abstract phrases or integer expressions using syntax-directed definition. \\
+5. Algebra A : Set with operations and constants. \\
+Signature S : Type of an algebra \\
+\begin{enumerate}
+    \item $S_{group} = (t, id:t, \circ:t\times t \rightarrow t, (-)^{-1}:t\rightarrow t$)
+    \item $A_0 = (\mathbb{Z}, 0\in \mathbb{Z}, +:\mathbb{Z}\times \mathbb{Z}\rightarrow \mathbb{Z}, -:\mathbb{Z}\rightarrow \mathbb{Z})$
+    \item $A_1 = (\mathbb{R}_{>0}, 1 \in \mathbb{R}_{>0}, \times:\mathbb{R}_{>0}\times\mathbb{R}_{>0}\rightarrow \mathbb{R}_{>0}, (-)^{-1}:\mathbb{R}_{>0} \rightarrow \mathbb{R}_{>0})$ \\
+    $A_0 : S_{group}, A_1:S_{group}$
+\end{enumerate}
+\begin{align*}
+    S_{intexp} = (t, 0:t, 1:t, \ldots, x:t, y:t, \ldots, \\
+    -:t\rightarrow t, +, \times, -, \div : t \times t \rightarrow t) \\
+    A_{grammar} = (FinTrees, 0\in FinTrees, \ldots, \\
+    x\in FinTrees, \ldots, \\
+    - \in [FinTrees \rightarrow FinTrees] \\
+    \times \in [FinTrees \rightarrow FinTrees])
+\end{align*}
+\begin{figure}[h]
+    \begin{tikzcd}T \mapsto & -\arrow[d, dash] \\& T\end{tikzcd} \hspace{1cm}
+    \begin{tikzcd}(T_1, T_2) \mapsto & &\times\arrow[ld, dash] \arrow[rd, dash]&\\&T_1&&T_2\end{tikzcd})
+\end{figure}
+6. Algebra Homomorphism \\
+Map between algebras that preserves constants and operations.
+\begin{align*}
+    S=(t, c_1:t, \ldots, c_n:t, \ldots, \\
+    op_1 :t\times \ldots \times t \rightarrow t , \ldots, op_m : t \times \ldots \times t \rightarrow t) \\
+    A_0 = (\mu_0(=|A_0|\text{ (notation)}), c_1^0 \in \mu_0, \ldots, c_n^0 \in \mu_0, \\
+    op_1^0 \in \mu_0 \times \ldots \times \mu_0 \rightarrow \mu_0, \ldots, op_m^0 \in \mu_0, \times \ldots, \times \mu_0 \rightarrow \mu_0) \\
+    A_1 = (\mu_1, c_1^1 \in \mu_1, \ldots, c_n^1 \in \mu_1, \\
+    op_1^1 \in \mu_1 \times \ldots \times \mu_1 \rightarrow \mu_1, \ldots, op_m^1 \in \mu_1, \times \ldots, \times \mu_1 \rightarrow \mu_1) \\
+\end{align*}
+$f\in \mu_0 \rightarrow \mu_1$ is a homomorphism if
+\begin{align*}
+    (1) \forall j. f(c_j^0) = c_j^1  \\
+    (2) \forall i. f(op_j^0(x_1, \ldots, x_k)) = op_j^1 (f(x_1, \ldots, f(x_k)))
+\end{align*}
+7. Initial Algebra of a signature S\\
+\begin{itemize}
+    \item An algebra A of the signature S s.t. \\
+    for all algebras $A'$ of the same signature, there is a \underline{unique} homomorphism f from A to A'.
+    \item $A_{grammar}$ is initial.
+    \item Formally, an abstract syntax fixes a signature, and it denotes an initial algebra of the signature. An abstract phrase is an element of that algebra.
+\end{itemize}
+Exercise : Prove that $A_{grammar}$ is indeed an initial algebra. \\
+Exercise : Let $A_0, A_1$ be initial algebras of the same signatures S. \\
+Then, there are homomorphisms $f\in |A_0| \rightarrow |A_1|$ and $g \in |A_1| \rightarrow |A_0|$ s.t. $f\circ g = id, g\circ f = id$. \\
+This means that all initial algebras of S are essentially the same, i.e. isomorphic. Prove this fact.
+\section{Syntax-directed definition and denotational semantics}
+1. Defenition of a map on integer expressions using a form of induction and case analysis \\
+2. $FV(e) = V$ (so, $FV:\nonterminal{intexp} \rightarrow 2^{\nonterminal{var}}$) \\
+FV : free variables, e : integer expression, V : set of free variables in e. \\
+\begin{align*}
+    FV(c) = \o \text{ c is a constant}& FV(x) = \{x\} \text{ x is a variable}\\
+    FV(-e) = FV(e) & FV(e_1 + e_2) = FV(e_1) \cup FV(e_2)
+\end{align*}
+3. Two features : case analysis, recursive calls on subphrases
+4. $\llbracket - \rrbracket \in \nonterminal{intexp} \rightarrow \Sigma \rightarrow \mathbb{Z}$ \\
+where $\Sigma = \nonterminal{var} \rightarrow \mathbb{Z}$, a set of states $\sigma$. \\
+\begin{align*}
+    &\llbracket c \rrbracket \sigma = c \\
+    &\llbracket x \rrbracket \sigma = \sigma(x) \\
+    &\llbracket -e \rrbracket \sigma = - \llbracket e \rrbracket \sigma \\
+    &\llbracket e_1 + e_2 \rrbracket \sigma = \llbracket e_1 \rrbracket \sigma + \llbracket e_2 \rrbracket \sigma
+\end{align*}
+Intuitively, $\llbracket - \rrbracket$ maps trees to mathematical functions in a syntax directed (also called compositional) way. Such a compositional mapping from syntactic entities to mathematical entities is called denotational semantics. \\
+5. In both cases, we are using the initiality of <intexp>. What are the target algebras in those cases? \\
+(1) \begin{align*}
+    &|A_1| = 2^{\nonterminal{var}} \\
+    &c^1 = \o \\
+    &x^1 = \{x\}\\
+    &-^1 (X) = X \\
+    &+^1 (X, Y) = X\cup Y & \times^2, \div^2, \rem^2 \text{ defined similarly}
+\end{align*}
+(2)
+\begin{align*}
+    &|A_2| = \Sigma \rightarrow \mathbb{Z} \\
+    &c^2 (\sigma) = c\\
+    &x^2 (\sigma) = \sigma(x) \\
+    &-^2 (f)(\sigma) = -(f)(\sigma) \\
+    &+^2 (f, g)(\sigma) = f(\sigma) + g(\sigma) & \times^2, \div^2, \rem^2 \text{ defined similarly}
+\end{align*}
+6. Exercise \\
+$\delta \in \nonterminal{var} \rightarrow \nonterminal{intexp}$ is substitution. \\
+Define $\sfrac{e}{\delta}$, the application of substitution $\delta$ to $e$.
+\section{Structural induction}
+1. We want to show that some property $\phi$ holds for all integer expressions. What should we do? \\
+2. Use induction on the structure of expressions. \\
+That is, for each expression e, prove the property assuming that the property holds for the subexpressions of e.
+\begin{lemma}[Coincidence]
+    For every expression e and states $\sigma, \sigma'$, \\
+    if $\forall x\in FV(e) \sigma(x) = \sigma'(x) $ \\
+    then $\llbracket e \rrbracket \sigma = \llbracket e \rrbracket \sigma$
+\end{lemma}
+\begin{proof}
+    By structural induction,
+    \begin{itemize}
+        \item $e \equiv c : \llbracket c \rrbracket \sigma = c =  \llbracket c \rrbracket \sigma' $
+        \item $e \equiv x : \llbracket x \rrbracket \sigma = \sigma(x) = \sigma'(x) = \llbracket x \rrbracket \sigma'$ \\
+        because $x \in FV(x)$
+        \item $e \equiv -e' : FV(e) = FV(e')$ \\
+        By induction hypothesis, $\llbracket e' \rrbracket \sigma = \llbracket e' \rrbracket \sigma'$ \\
+        $\llbracket e \rrbracket \sigma = - \llbracket e' \rrbracket \sigma = - \llbracket e' \rrbracket \sigma' = \llbracket e \rrbracket \sigma'$
+        \item $e_1 \times e_2, e_1 \div e_2, e_1\text{ rem }e_2$
+    \end{itemize}
+\end{proof}
+\begin{lemma}[Substitution]
+    If $\forall x. \sigma(x) = \llbracket \sigma(x) \rrbracket \sigma' $ \\
+    $\llbracket \sfrac{e}{\delta} \rrbracket \sigma' = \llbracket e \rrbracket \delta$
+\end{lemma}
+\begin{proof}
+    By structural induction.
+\end{proof}
+\begin{align*}
+    \text{Notation : }(1) : &x_1 \rightarrow e_1, \ldots, x_n \rightarrow e_n \\
+    &\text{means the substitutuion that maps } x_i \text{ to }e_i \text{ and }y\neq x_i \text{ to } y. \\
+    (2) : &[\delta | x:v] (y) = \begin{cases} \delta(y) & \text{if }y\neq x \\ v &\text{if }x=y\end{cases}
+\end{align*}
+\begin{corollary}
+    $\llbracket \sfrac{e}{x_1 \rightarrow e_1, \ldots, x_n \rightarrow e_n} \rrbracket \sigma = \llbracket e \rrbracket [\delta | x_1 : \llbracket e_1 \rrbracket \delta, | \ldots | x_n : \llbracket e_n \rrbracket \delta]$
+\end{corollary}
+This intuitively says the correspondence between syntactic and semantic substitutions. \\
+3. Structural induction holds because of the initiality of <intexp>. Can you explain why it is the case?
+\section{Predicate logic (first-order logic) informally}
+1. Language for expressing (boolean) properties (also called assertions). \\
+2. Extensions of boolean expressions in programming languages with universal and existential quantifications. \\
+3. Examples
+\begin{itemize}
+    \item $\forall x. \forall y. \exists m. \exists n. x \times m + y \times n = 1$
+    \item $\forall x. \exists y. y > x$
+\end{itemize}
+4. Quantifiers are over integers, reals, and other first-order entities (i.e. \underline{not} over sets of integers, and functions, etc). The "first-order" in first-order logic refers to this restriction. \\
+We will consider a version of predicate logic or first-order logic where quantifiers range over integers and all variables are integer variables.
+\section{Abstract Syntax of predicate logic}
+1. Described in terms of the following abstract grammar : \\
+\begin{align*}
+    \nonterminal{intexp} &::= 0 | 1 | 2 | \ldots \\
+    &| \nonterminal{var} | -\nonterminal{intexp} | \nonterminal{intexp} \begin{array}{c} + \\ - \\ \times \\ \div \\ rem \end{array} \nonterminal{intexp} \\
+    \nonterminal{assert} &::= true | false | \nonterminal{intexp} \begin{array}{c} = \\ \neq \\ < \\ \le \\ > \\ \ge \end{array} \nonterminal{intexp} \\
+    &| \neg \nonterminal{assert} | \nonterminal{assert} \begin{array}{c} \vee \\ \wedge \\ \Rightarrow \\ \Leftarrow \end{array} \nonterminal{assert} \\
+    &| \begin{array}{c} \forall \\ \exists \end{array} \nonterminal{var}. \nonterminal{assert}
+\end{align*}
+To simplify presentation, we will consider only $+, \times, \wedge, \forall, =, >$. \\
+2. What do we mean by abstract grammar and abstract syntax here? \\
+If you got confused about initial-algebra stuff, just think that our abstract syntax is the set of all finite derivation or parse trees. \\
+If not, you can view the abstract syntax as the initial algebra of the signature induced by the grammar. \\
+Signature
+\begin{align*}
+    S_{PL} = (&t^{\swarrow \text{integer exps}}, u^{\swarrow \text{assertions}}), 0:t, 1:t, \ldots, \\
+    &x:t, y:t, \ldots, \\
+    &-:t\rightarrow t, +:t \times t \rightarrow t, \times : t \times t \rightarrow t \\
+    &true : u, false : u, =:t \times t \rightarrow u, < : t\times t \rightarrow u \\
+    &\neg : u \rightarrow u, \wedge : u \times u \rightarrow u, \\
+    &\forall : \nonterminal{var} \times u \rightarrow u
+\end{align*}
+Algebra
+\begin{align*}
+    A_0 = (&\mu^0, \nu^0, 0^0 \in \mu^0, 1 \in \mu^0, \ldots,  \\
+    &x^0 \in \mu^0, y^0 \in \mu^0, \ldots, \\
+    &-^0\in [\mu^0 \rightarrow \mu^0], \begin{array}{c}+^0 \\ \times^0 \end{array} \in [\mu^0 \times \mu^0 \rightarrow \mu^9], \\
+    &true^0 \in \nu^0, false^0 \in \nu^0, \begin{array}{c} =^0 \\ <^0 \end{array} \in [\mu^0 \times \mu^0 \rightarrow \nu^0], \\
+    &\neg^0 \in [\nu^0 \rightarrow \nu^0], \wedge^0 \in [\nu^0 \times \nu^0 \rightarrow \nu^0], \\
+    &\forall^0 \in [\nonterminal{var} \times \nu^0 \rightarrow \nu^0]) \\
+    A_1 = (&\mu^1, \nu^1, \ldots, =^1 \in [\mu^1 \times \mu^1 \rightarrow \nu^1], \\
+    &\forall^1\in [\nonterminal{var} \times \nu^1 \rightarrow \nu^1])
+\end{align*}
+An algebra homomorhpism from $A_0$ to $A_1$ is a pair $(h:\mu^0\rightarrow \mu^1, k:\nu^0\rightarrow\nu^1)$ that preserves all constants and operations. For instance,
+\begin{align*}
+    k(=^0 (a, b)) = =^1 (h(a), h(b)) \text{ for all }a, b\in \mu^0 \\
+    \text{for any }x\in \nonterminal{var}, a\in \mu^0, k(\forall^0 (x, a)) = \forall^1 (x, k(a))
+\end{align*}
+As before, the abstract syntax is \underline{the initial algebra of th signature $S_{PL}$} \footnote{Isomorphic to the algebra built with derivation trees}. Because of initiality, we can define a function on assertions in a syntax-directed way. Also, we can use structural induction to prove properties about assertions. \\
+\section{Denotational Semantics}
+1. We define two functions :
+\begin{align*}
+    \llbracket - \rrbracket_{intexp}\footnotemark \in [\nonterminal{intexp} \rightarrow \overbrace{\Sigma}^{\nonterminal{var}\rightarrow \mathbb{Z}} \rightarrow \mathbb{Z}] \\
+    \llbracket - \rrbracket_{assert}\footnotemark \in [\nonterminal{assert} \rightarrow \Sigma \rightarrow \underbrace{\mathbb{B}}_{\{tt, ff\}}]
+\end{align*}
+\footnotetext{We will omit subscripts most of the time.}
+2. The definition of $\llbracket - \rrbracket_{intexp}$ is the same as before. Recall that it is syntax-directed. \\
+3. The definition of $\llbracket - \rrbracket_{assert}$ is as follows:
+\begin{align*}
+    &\llbracket true \rrbracket \sigma = tt &\llbracket false \rrbracket \sigma = ff \\
+    &\llbracket e_0 \begin{array}{c} = \\ < \end{array} e_1 \rrbracket \sigma = (\llbracket e_0 \rrbracket_{intexp} \sigma \begin{array}{c} = \\ < \end{array} \llbracket e_1 \rrbracket_{intexp} \sigma) \\
+    &\llbracket \neg p \rrbracket \sigma = (\neg \llbracket p \rrbracket \sigma) \\
+    &\llbracket p_1 \wedge p_2 \rrbracket \sigma = (\llbracket p_1 \rrbracket \sigma \wedge \llbracket p_2 \rrbracket \sigma) \\
+    &\llbracket \forall x. p \rrbracket \sigma = (\forall n \in \mathbb{Z}. \llbracket p \rrbracket [\sigma|x:n])
+\end{align*}
+4. Don't forget that what appears inside $\llbracket - \rrbracket$ is a tree, while $\forall$ and $\wedge$ etc on the RHS of = are the usual mathematical notations. \\
+5. As we discussed already, here we are really defining an algebra $A$ of $S_{PL}$ s.t. \[A=(\Sigma \rightarrow \mathbb{Z}, \Sigma \rightarrow \mathbb{B}, \ldots)\]
+Then, we are using the initiality of the abstract syntax to get a map from it to A.
+\section{Inference Rules}
+1. Rules for deriving always-true (In other words, \underline{valid}\footnote{p is \underline{valid} if $\llbracket p \rrbracket \sigma = tt$ for all $\sigma \in \Sigma$}) assertions. \\
+2. Expressed using the inference-rule notation. \\
+\begin{figure*}
+    \centering
+    \begin{subfigure}[b]{0.475\textwidth}
+        \centering
+        \begin{prooftree}
+            \hypo{p_0}
+            \hypo{p_0 \Rightarrow p_1}
+            \infer2{p_1}
+        \end{prooftree}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.475\textwidth}
+        \centering
+        \begin{prooftree}
+            \hypo{p}
+            \infer1{\forall x. p}
+        \end{prooftree}
+    \end{subfigure}
+    \vskip\baselineskip
+    \begin{subfigure}[b]{0.475\textwidth}
+        \centering
+        \begin{prooftree}
+            \infer0{e_0 = e_1 \Rightarrow e_1 = e_0}
+        \end{prooftree}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.475\textwidth}
+        \centering
+        \begin{prooftree}
+            \hypo{p_0}
+            \hypo{p_1}
+            \hypo{\ldots}
+            \hypo{p_n}
+            \infer4{p}
+        \end{prooftree}
+    \end{subfigure}
+\end{figure*}
+\begin{itemize}
+    \item general form
+    \item expressions that if all of $p_0, \ldots, p_n$ are valid, then p is valid.
+    \item \underline{doesn't} say that for all $\sigma \in \Sigma$, if $\llbracket p_0 \rrbracket \sigma = \ldots = \llbracket p_n \rrbracket \sigma = tt$ then $\llbracket p \rrbracket \sigma = tt$.
+\end{itemize}
+Exercise : Prove why the above three rules are \underline{correct}\footnote{also called sound} \\
+3. A big part of research on or study about predicate logic is to study these rules. \\
+In this course, however, we will not do this.
+\section{Binding and substitution}
+1. $\forall v, \exists v$
+\begin{itemize}
+    \item examples of binders.
+    \item They have the scope of binding.
+    \item Informally, they \underline{introduce a new variable, give a name v to it, and make it available within its scope}\footnote{binding, which happens frequently in a programming language.}. Morally, renaming v to w should not change the meaning of the assertion.
+\end{itemize}
+2. An occurence of a variable x is bounded in p if x is within the scope of a binder for x in p.\\
+3. An occurence of x is free in p if it is not bound in p. \\
+4. A variable x is free in p if it has a free occurence in p. \\
+5. We can define functions $FV_{assert}$ and $FV_{intexp}$ that compute the set of free variables of assertions and integer expressions in a syntax-directed way.
+\begin{align*}
+    &FV_{intexp} : \text{ defined as before} \\
+    &FV_{assert}(true) = FV_{assert}(false) = \o \\
+    &FV_{assert}(e_0 \begin{array}{c}= \\ <\end{array} e_1) = FV_{intexp}(e_0) \cup FV_{intexp}(e_1) \\
+    &FV_{assert}(\neg p) = FV_{assert}(p) \\
+    &FV_{assert}(p_1 \wedge p_2) = FV_{assert}(p_1) \cup FV_{assert}{p_2} \\
+    &FV_{assert}(\forall v. p) = FV_{assert}(p) \setminus \{v\}
+\end{align*}
+Exercise. Define an algebra for $S_{PL}$ such that the algebra homomorphism for the abstract syntax to this algebra is $(FV_{intexp}, FV_{assert})$ \\
+6. Now, how should we deal with binders during substitution? It is not entirely obvious. Several textbooks had wrong definitions in old days. \\
+Mistakes : $(\sfrac{(\forall y. y > x)}{x\mapsto y+1})=(\forall y.y>y+1)$ \\
+Correct definition
+\begin{align*}
+    &\sfrac{true}{\delta} = true & \sfrac{false}{\delta} = false \\
+    &\sfrac{e_0 \begin{array}{c}=\\<\end{array}e_1}{\delta} = \sfrac{e_0}{\delta}\begin{array}{c}=\\<\end{array}\sfrac{e_1}{\delta} &\sfrac{\neg p}{\delta} = \neg \sfrac{p}{\delta} \\
+    &\sfrac{p_1 \wedge p_2}{\delta} = \sfrac{p_1}{\delta} \wedge \sfrac{p_2}{\delta} \\
+    &\sfrac{\forall v. p}{\delta} = \forall v_{new}. (\sfrac{p}{[\delta | v:v_{new}]})\footnote{device that lest us avoid variable capturing.} \\
+    &\text{where }v_{new}\notin \cup_{w\in FV(p)\setminus \{v\}}FV(\delta(w))
+\end{align*}
+If v is not in the set, then $v_{new}=v$. Otherwise, $v_{new}$ is the first variable not in the set.
+\begin{proposition}{Coincidence}
+    $p$ : assertion or integer expression \\
+    $\delta, \delta'$ : states s.t. $\delta \omega = \delta' \omega \text{ for all }\omega \in FV(p)$ \\
+    $\Rightarrow$ \\
+    $\llbracket p \rrbracket \delta = \llbracket p \rrbracket \delta'$
+\end{proposition}
+\begin{proof}
+    By structural induction. \\
+    We can use it because the abstract syntax for predicate logic is an initial algebra.
+    \begin{itemize}
+        \item true or false :  obvious
+        \item $p\equiv (e_1 \begin{array}{c} =\\<\end{array}e_2)$ :
+        \begin{align*}
+            &FV(e_i) \subseteq FV(p) \\
+            &\forall \omega \in FV(e_i). \delta \omega = \delta' \omega \\
+            &\text{We can use induction and get }\llbracket e_i \rrbracket \delta = \llbracket e_i \rrbracket \delta'
+        \end{align*}
+        \begin{align*}
+            &\llbracket e_1 < e_2 \rrbracket \delta &= \llbracket e_1 \rrbracket \delta < \llbracket e_2 \rrbracket \delta \\
+            & &= (\llbracket e_1 \rrbracket \delta' < \llbracket e_1 \rrbracket \delta') \\
+            & &= (\llbracket e_1 < e_2 \rrbracket \delta')
+        \end{align*}
+        \item $p\equiv \neg p'$ or $p\equiv p_1 \wedge p_2$ : similar proof.
+        \item $p\equiv \forall x.p'$ : For all $n \in \mathbb{Z}$
+        \[\sigma_1 := [\sigma|x:n]\text{ and }\sigma_1'=[\sigma'|x:n]\]
+        Then, $\forall \omega \in FV(p')$
+        \[\sigma_1(\omega)=\sigma_1'(\omega)\]
+        By induction hypothesis, $\llbracket p' \rrbracket \sigma_1 = \llbracket p' \rrbracket \sigma_1'$ \\
+        \begin{align*}
+            \llbracket \forall x. p' \rrbracket \sigma &= (\forall n \in \mathbb{Z}. \llbracket p' \rrbracket [\sigma|x:n]) \\
+            &=\forall n \in \mathbb{Z}, \llbracket p' \rrbracket [\sigma' | x:n] = \llbracket \forall x. p' \rrbracket \sigma'
+        \end{align*}
+    \end{itemize}
+\end{proof}
+\begin{proposition}[Substitution]
+    \[\sigma \omega = \llbracket \delta \omega \rrbracket \sigma' \Rightarrow \llbracket p\rrbracket \sigma = \llbracket \sfrac{p}{\delta} \rrbracket \sigma'\]
+\end{proposition}
+\begin{proof}
+    By structural induction.
+\end{proof}
+\begin{proposition}[Finite substitution theorem]
+    \[\llbracket \sfrac{p}{v_0 \rightarrow e_0, \ldots, v_{n-1} \rightarrow e_{n-1}}\sigma' = \llbracket p \rrbracket [\sigma'|v_0:\llbracket e_0 \rrbracket \sigma' | \ldots | v_{n-1}:\llbracket e_{n-1}\rrbracket \sigma']\]
+\end{proposition}
+\begin{proof}
+    An easy consequence of proposition 1.3.
+\end{proof}
+Correspondence between syntactic and semantic substitutions.
+\begin{proposition}[Renaming]
+    If $\omega \notin FV_{assert}(q)\setminus \{v\}$ \\
+    then $\llbracket \forall \omega. (\sfrac{q}{v\rightarrow \omega})\rrbracket = \llbracket \forall v. q \rrbracket$
+\end{proposition}
+Renaming doesn't change the meaning of an assertion.
+\end{document}
