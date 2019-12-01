@@ -1,4 +1,4 @@
-\documentclass{article}[12pt]
+\documentclass{report}[12pt]
 
 \usepackage{mathtools,enumitem,amssymb,amsmath,kotex,amsfonts,listings,stmaryrd,amsthm}
 \usepackage{xfrac,txfonts}
@@ -27,8 +27,11 @@
 \newtheorem{example}{Example}
 \newcommand{\nonterminal}[1]{\langle \text{#1}\rangle}
 \newcommand{\rem}[0]{\text{ rem }}
+\newcommand{\interp}[1]{\llbracket #1 \rrbracket}
 
-\title{CS520 Lecture 2}
+\setcounter{chapter}{2}
+
+\title{CS520 Lecture 2\\Predicate Logic}
 \Large
 \maketitle
 
@@ -109,17 +112,17 @@ Signature S : Type of an algebra \\
 6. Algebra Homomorphism \\
 Map between algebras that preserves constants and operations.
 \begin{align*}
-    S=(t, c_1:t, \ldots, c_n:t, \ldots, \\
-    op_1 :t\times \ldots \times t \rightarrow t , \ldots, op_m : t \times \ldots \times t \rightarrow t) \\
-    A_0 = (\mu_0(=|A_0|\text{ (notation)}), c_1^0 \in \mu_0, \ldots, c_n^0 \in \mu_0, \\
-    op_1^0 \in \mu_0 \times \ldots \times \mu_0 \rightarrow \mu_0, \ldots, op_m^0 \in \mu_0, \times \ldots, \times \mu_0 \rightarrow \mu_0) \\
-    A_1 = (\mu_1, c_1^1 \in \mu_1, \ldots, c_n^1 \in \mu_1, \\
-    op_1^1 \in \mu_1 \times \ldots \times \mu_1 \rightarrow \mu_1, \ldots, op_m^1 \in \mu_1, \times \ldots, \times \mu_1 \rightarrow \mu_1) \\
+    S=(&t, c_1:t, \ldots, c_n:t, \ldots, \\
+    &op_1 :t\times \ldots \times t \rightarrow t , \ldots, op_m : t \times \ldots \times t \rightarrow t) \\
+    A_0 = (&\mu_0(=|A_0|\text{ (notation)}), c_1^0 \in \mu_0, \ldots, c_n^0 \in \mu_0, \\
+    &op_1^0 \in \mu_0 \times \ldots \times \mu_0 \rightarrow \mu_0, \ldots, op_m^0 \in \mu_0, \times \ldots, \times \mu_0 \rightarrow \mu_0) \\
+    A_1 = (&\mu_1, c_1^1 \in \mu_1, \ldots, c_n^1 \in \mu_1, \\
+    &op_1^1 \in \mu_1 \times \ldots \times \mu_1 \rightarrow \mu_1, \ldots, op_m^1 \in \mu_1, \times \ldots, \times \mu_1 \rightarrow \mu_1) \\
 \end{align*}
 $f\in \mu_0 \rightarrow \mu_1$ is a homomorphism if
 \begin{align*}
-    (1) \forall j. f(c_j^0) = c_j^1  \\
-    (2) \forall i. f(op_j^0(x_1, \ldots, x_k)) = op_j^1 (f(x_1, \ldots, f(x_k)))
+    &(1) \forall j. f(c_j^0) = c_j^1  \\
+    &(2) \forall i. f(op_j^0(x_1, \ldots, x_k)) = op_j^1 (f(x_1, \ldots, f(x_k)))
 \end{align*}
 7. Initial Algebra of a signature S\\
 \begin{itemize}
@@ -141,15 +144,15 @@ FV : free variables, e : integer expression, V : set of free variables in e. \\
     FV(-e) = FV(e) & FV(e_1 + e_2) = FV(e_1) \cup FV(e_2)
 \end{align*}
 3. Two features : case analysis, recursive calls on subphrases
-4. $\llbracket - \rrbracket \in \nonterminal{intexp} \rightarrow \Sigma \rightarrow \mathbb{Z}$ \\
+4. $\interp{ - } \in \nonterminal{intexp} \rightarrow \Sigma \rightarrow \mathbb{Z}$ \\
 where $\Sigma = \nonterminal{var} \rightarrow \mathbb{Z}$, a set of states $\sigma$. \\
 \begin{align*}
-    &\llbracket c \rrbracket \sigma = c \\
-    &\llbracket x \rrbracket \sigma = \sigma(x) \\
-    &\llbracket -e \rrbracket \sigma = - \llbracket e \rrbracket \sigma \\
-    &\llbracket e_1 + e_2 \rrbracket \sigma = \llbracket e_1 \rrbracket \sigma + \llbracket e_2 \rrbracket \sigma
+    &\interp{ c } \sigma = c \\
+    &\interp{ x } \sigma = \sigma(x) \\
+    &\interp{ -e } \sigma = - \interp{ e } \sigma \\
+    &\interp{ e_1 + e_2 } \sigma = \interp{ e_1 } \sigma + \interp{ e_2 } \sigma
 \end{align*}
-Intuitively, $\llbracket - \rrbracket$ maps trees to mathematical functions in a syntax directed (also called compositional) way. Such a compositional mapping from syntactic entities to mathematical entities is called denotational semantics. \\
+Intuitively, $\interp{ - }$ maps trees to mathematical functions in a syntax directed (also called compositional) way. Such a compositional mapping from syntactic entities to mathematical entities is called denotational semantics. \\
 5. In both cases, we are using the initiality of <intexp>. What are the target algebras in those cases? \\
 (1) \begin{align*}
     &|A_1| = 2^{\nonterminal{var}} \\
@@ -176,23 +179,23 @@ That is, for each expression e, prove the property assuming that the property ho
 \begin{lemma}[Coincidence]
     For every expression e and states $\sigma, \sigma'$, \\
     if $\forall x\in FV(e) \sigma(x) = \sigma'(x) $ \\
-    then $\llbracket e \rrbracket \sigma = \llbracket e \rrbracket \sigma$
+    then $\interp{ e } \sigma = \interp{ e } \sigma$
 \end{lemma}
 \begin{proof}
     By structural induction,
     \begin{itemize}
-        \item $e \equiv c : \llbracket c \rrbracket \sigma = c =  \llbracket c \rrbracket \sigma' $
-        \item $e \equiv x : \llbracket x \rrbracket \sigma = \sigma(x) = \sigma'(x) = \llbracket x \rrbracket \sigma'$ \\
+        \item $e \equiv c : \interp{ c } \sigma = c =  \interp{ c } \sigma' $
+        \item $e \equiv x : \interp{ x } \sigma = \sigma(x) = \sigma'(x) = \interp{ x } \sigma'$ \\
         because $x \in FV(x)$
         \item $e \equiv -e' : FV(e) = FV(e')$ \\
-        By induction hypothesis, $\llbracket e' \rrbracket \sigma = \llbracket e' \rrbracket \sigma'$ \\
-        $\llbracket e \rrbracket \sigma = - \llbracket e' \rrbracket \sigma = - \llbracket e' \rrbracket \sigma' = \llbracket e \rrbracket \sigma'$
-        \item $e_1 \times e_2, e_1 \div e_2, e_1\text{ rem }e_2$
+        By induction hypothesis, $\interp{ e' } \sigma = \interp{ e' } \sigma'$ \\
+        $\interp{ e } \sigma = - \interp{ e' } \sigma = - \interp{ e' } \sigma' = \interp{ e } \sigma'$
+        \item $e_1 \times e_2, e_1 \div e_2, e_1\rem e_2$
     \end{itemize}
 \end{proof}
 \begin{lemma}[Substitution]
-    If $\forall x. \sigma(x) = \llbracket \sigma(x) \rrbracket \sigma' $ \\
-    $\llbracket \sfrac{e}{\delta} \rrbracket \sigma' = \llbracket e \rrbracket \delta$
+    If $\forall x. \sigma(x) = \interp{ \sigma(x) } \sigma' $ \\
+    $\interp{ \sfrac{e}{\delta} } \sigma' = \interp{ e } \delta$
 \end{lemma}
 \begin{proof}
     By structural induction.
@@ -203,7 +206,7 @@ That is, for each expression e, prove the property assuming that the property ho
     (2) : &[\delta | x:v] (y) = \begin{cases} \delta(y) & \text{if }y\neq x \\ v &\text{if }x=y\end{cases}
 \end{align*}
 \begin{corollary}
-    $\llbracket \sfrac{e}{x_1 \rightarrow e_1, \ldots, x_n \rightarrow e_n} \rrbracket \sigma = \llbracket e \rrbracket [\delta | x_1 : \llbracket e_1 \rrbracket \delta, | \ldots | x_n : \llbracket e_n \rrbracket \delta]$
+    $\interp{ \sfrac{e}{x_1 \rightarrow e_1, \ldots, x_n \rightarrow e_n} } \sigma = \interp{ e } [\delta | x_1 : \interp{ e_1 } \delta, | \ldots | x_n : \interp{ e_n } \delta]$
 \end{corollary}
 This intuitively says the correspondence between syntactic and semantic substitutions. \\
 3. Structural induction holds because of the initiality of <intexp>. Can you explain why it is the case?
@@ -221,7 +224,7 @@ We will consider a version of predicate logic or first-order logic where quantif
 1. Described in terms of the following abstract grammar : \\
 \begin{align*}
     \nonterminal{intexp} &::= 0 | 1 | 2 | \ldots \\
-    &| \nonterminal{var} | -\nonterminal{intexp} | \nonterminal{intexp} \begin{array}{c} + \\ - \\ \times \\ \div \\ rem \end{array} \nonterminal{intexp} \\
+    &| \nonterminal{var} | -\nonterminal{intexp} | \nonterminal{intexp} \begin{array}{c} + \\ - \\ \times \\ \div \\ \rem \end{array} \nonterminal{intexp} \\
     \nonterminal{assert} &::= true | false | \nonterminal{intexp} \begin{array}{c} = \\ \neq \\ < \\ \le \\ > \\ \ge \end{array} \nonterminal{intexp} \\
     &| \neg \nonterminal{assert} | \nonterminal{assert} \begin{array}{c} \vee \\ \wedge \\ \Rightarrow \\ \Leftarrow \end{array} \nonterminal{assert} \\
     &| \begin{array}{c} \forall \\ \exists \end{array} \nonterminal{var}. \nonterminal{assert}
@@ -259,24 +262,24 @@ As before, the abstract syntax is \underline{the initial algebra of th signature
 \section{Denotational Semantics}
 1. We define two functions :
 \begin{align*}
-    \llbracket - \rrbracket_{intexp}\footnotemark \in [\nonterminal{intexp} \rightarrow \overbrace{\Sigma}^{\nonterminal{var}\rightarrow \mathbb{Z}} \rightarrow \mathbb{Z}] \\
-    \llbracket - \rrbracket_{assert}\footnotemark \in [\nonterminal{assert} \rightarrow \Sigma \rightarrow \underbrace{\mathbb{B}}_{\{tt, ff\}}]
+    \interp{ - }_{intexp}\footnotemark \in [\nonterminal{intexp} \rightarrow \overbrace{\Sigma}^{\nonterminal{var}\rightarrow \mathbb{Z}} \rightarrow \mathbb{Z}] \\
+    \interp{ - }_{assert}\footnotemark \in [\nonterminal{assert} \rightarrow \Sigma \rightarrow \underbrace{\mathbb{B}}_{\{tt, ff\}}]
 \end{align*}
 \footnotetext{We will omit subscripts most of the time.}
-2. The definition of $\llbracket - \rrbracket_{intexp}$ is the same as before. Recall that it is syntax-directed. \\
-3. The definition of $\llbracket - \rrbracket_{assert}$ is as follows:
+2. The definition of $\interp{ - }_{intexp}$ is the same as before. Recall that it is syntax-directed. \\
+3. The definition of $\interp{ - }_{assert}$ is as follows:
 \begin{align*}
-    &\llbracket true \rrbracket \sigma = tt &\llbracket false \rrbracket \sigma = ff \\
-    &\llbracket e_0 \begin{array}{c} = \\ < \end{array} e_1 \rrbracket \sigma = (\llbracket e_0 \rrbracket_{intexp} \sigma \begin{array}{c} = \\ < \end{array} \llbracket e_1 \rrbracket_{intexp} \sigma) \\
-    &\llbracket \neg p \rrbracket \sigma = (\neg \llbracket p \rrbracket \sigma) \\
-    &\llbracket p_1 \wedge p_2 \rrbracket \sigma = (\llbracket p_1 \rrbracket \sigma \wedge \llbracket p_2 \rrbracket \sigma) \\
-    &\llbracket \forall x. p \rrbracket \sigma = (\forall n \in \mathbb{Z}. \llbracket p \rrbracket [\sigma|x:n])
+    &\interp{ true } \sigma = tt &\interp{ false } \sigma = ff \\
+    &\interp{ e_0 \begin{array}{c} = \\ < \end{array} e_1 } \sigma = (\interp{ e_0 }_{intexp} \sigma \begin{array}{c} = \\ < \end{array} \interp{ e_1 }_{intexp} \sigma) \\
+    &\interp{ \neg p } \sigma = (\neg \interp{ p } \sigma) \\
+    &\interp{ p_1 \wedge p_2 } \sigma = (\interp{ p_1 } \sigma \wedge \interp{ p_2 } \sigma) \\
+    &\interp{ \forall x. p } \sigma = (\forall n \in \mathbb{Z}. \interp{ p } [\sigma|x:n])
 \end{align*}
-4. Don't forget that what appears inside $\llbracket - \rrbracket$ is a tree, while $\forall$ and $\wedge$ etc on the RHS of = are the usual mathematical notations. \\
+4. Don't forget that what appears inside $\interp{ - }$ is a tree, while $\forall$ and $\wedge$ etc on the RHS of = are the usual mathematical notations. \\
 5. As we discussed already, here we are really defining an algebra $A$ of $S_{PL}$ s.t. \[A=(\Sigma \rightarrow \mathbb{Z}, \Sigma \rightarrow \mathbb{B}, \ldots)\]
 Then, we are using the initiality of the abstract syntax to get a map from it to A.
 \section{Inference Rules}
-1. Rules for deriving always-true (In other words, \underline{valid}\footnote{p is \underline{valid} if $\llbracket p \rrbracket \sigma = tt$ for all $\sigma \in \Sigma$}) assertions. \\
+1. Rules for deriving always-true (In other words, \underline{valid}\footnote{p is \underline{valid} if $\interp{ p } \sigma = tt$ for all $\sigma \in \Sigma$}) assertions. \\
 2. Expressed using the inference-rule notation. \\
 \begin{figure*}
     \centering
@@ -318,7 +321,7 @@ Then, we are using the initiality of the abstract syntax to get a map from it to
 \begin{itemize}
     \item general form
     \item expressions that if all of $p_0, \ldots, p_n$ are valid, then p is valid.
-    \item \underline{doesn't} say that for all $\sigma \in \Sigma$, if $\llbracket p_0 \rrbracket \sigma = \ldots = \llbracket p_n \rrbracket \sigma = tt$ then $\llbracket p \rrbracket \sigma = tt$.
+    \item \underline{doesn't} say that for all $\sigma \in \Sigma$, if $\interp{ p_0 } \sigma = \ldots = \interp{ p_n } \sigma = tt$ then $\interp{ p } \sigma = tt$.
 \end{itemize}
 Exercise : Prove why the above three rules are \underline{correct}\footnote{also called sound} \\
 3. A big part of research on or study about predicate logic is to study these rules. \\
@@ -358,7 +361,7 @@ If v is not in the set, then $v_{new}=v$. Otherwise, $v_{new}$ is the first vari
     $p$ : assertion or integer expression \\
     $\delta, \delta'$ : states s.t. $\delta \omega = \delta' \omega \text{ for all }\omega \in FV(p)$ \\
     $\Rightarrow$ \\
-    $\llbracket p \rrbracket \delta = \llbracket p \rrbracket \delta'$
+    $\interp{ p } \delta = \interp{ p } \delta'$
 \end{proposition}
 \begin{proof}
     By structural induction. \\
@@ -369,33 +372,33 @@ If v is not in the set, then $v_{new}=v$. Otherwise, $v_{new}$ is the first vari
         \begin{align*}
             &FV(e_i) \subseteq FV(p) \\
             &\forall \omega \in FV(e_i). \delta \omega = \delta' \omega \\
-            &\text{We can use induction and get }\llbracket e_i \rrbracket \delta = \llbracket e_i \rrbracket \delta'
+            &\text{We can use induction and get }\interp{ e_i } \delta = \interp{ e_i } \delta'
         \end{align*}
         \begin{align*}
-            &\llbracket e_1 < e_2 \rrbracket \delta &= \llbracket e_1 \rrbracket \delta < \llbracket e_2 \rrbracket \delta \\
-            & &= (\llbracket e_1 \rrbracket \delta' < \llbracket e_1 \rrbracket \delta') \\
-            & &= (\llbracket e_1 < e_2 \rrbracket \delta')
+            &\interp{ e_1 < e_2 } \delta &= \interp{ e_1 } \delta < \interp{ e_2 } \delta \\
+            & &= (\interp{ e_1 } \delta' < \interp{ e_1 } \delta') \\
+            & &= (\interp{ e_1 < e_2 } \delta')
         \end{align*}
         \item $p\equiv \neg p'$ or $p\equiv p_1 \wedge p_2$ : similar proof.
         \item $p\equiv \forall x.p'$ : For all $n \in \mathbb{Z}$
         \[\sigma_1 := [\sigma|x:n]\text{ and }\sigma_1'=[\sigma'|x:n]\]
         Then, $\forall \omega \in FV(p')$
         \[\sigma_1(\omega)=\sigma_1'(\omega)\]
-        By induction hypothesis, $\llbracket p' \rrbracket \sigma_1 = \llbracket p' \rrbracket \sigma_1'$ \\
+        By induction hypothesis, $\interp{ p' } \sigma_1 = \interp{ p' } \sigma_1'$ \\
         \begin{align*}
-            \llbracket \forall x. p' \rrbracket \sigma &= (\forall n \in \mathbb{Z}. \llbracket p' \rrbracket [\sigma|x:n]) \\
-            &=\forall n \in \mathbb{Z}, \llbracket p' \rrbracket [\sigma' | x:n] = \llbracket \forall x. p' \rrbracket \sigma'
+            \interp{ \forall x. p' } \sigma &= (\forall n \in \mathbb{Z}. \interp{ p' } [\sigma|x:n]) \\
+            &=\forall n \in \mathbb{Z}, \interp{ p' } [\sigma' | x:n] = \interp{ \forall x. p' } \sigma'
         \end{align*}
     \end{itemize}
 \end{proof}
 \begin{proposition}[Substitution]
-    \[\sigma \omega = \llbracket \delta \omega \rrbracket \sigma' \Rightarrow \llbracket p\rrbracket \sigma = \llbracket \sfrac{p}{\delta} \rrbracket \sigma'\]
+    \[\sigma \omega = \interp{ \delta \omega } \sigma' \Rightarrow \interp{ p} \sigma = \interp{ \sfrac{p}{\delta} } \sigma'\]
 \end{proposition}
 \begin{proof}
     By structural induction.
 \end{proof}
 \begin{proposition}[Finite substitution theorem]
-    \[\llbracket \sfrac{p}{v_0 \rightarrow e_0, \ldots, v_{n-1} \rightarrow e_{n-1}}\sigma' = \llbracket p \rrbracket [\sigma'|v_0:\llbracket e_0 \rrbracket \sigma' | \ldots | v_{n-1}:\llbracket e_{n-1}\rrbracket \sigma']\]
+    \[\interp{ \sfrac{p}{v_0 \rightarrow e_0, \ldots, v_{n-1} \rightarrow e_{n-1}}}\sigma' = \interp{ p } [\sigma'|v_0:\interp{ e_0 } \sigma' | \ldots | v_{n-1}:\interp{ e_{n-1}} \sigma']\]
 \end{proposition}
 \begin{proof}
     An easy consequence of proposition 1.3.
@@ -403,7 +406,7 @@ If v is not in the set, then $v_{new}=v$. Otherwise, $v_{new}$ is the first vari
 Correspondence between syntactic and semantic substitutions.
 \begin{proposition}[Renaming]
     If $\omega \notin FV_{assert}(q)\setminus \{v\}$ \\
-    then $\llbracket \forall \omega. (\sfrac{q}{v\rightarrow \omega})\rrbracket = \llbracket \forall v. q \rrbracket$
+    then $\interp{ \forall \omega. (\sfrac{q}{v\rightarrow \omega})} = \interp{ \forall v. q }$
 \end{proposition}
 Renaming doesn't change the meaning of an assertion.
 \end{document}

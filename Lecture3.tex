@@ -1,0 +1,223 @@
+\documentclass{report}[12pt]
+
+\usepackage{mathtools,enumitem,amssymb,amsmath,kotex,amsfonts,listings,stmaryrd,amsthm}
+\usepackage{xfrac,txfonts}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{ebproof}
+\usepackage{tikz}
+
+\usetikzlibrary{trees}
+\usetikzlibrary{cd}
+\begin{document}
+
+\newtheoremstyle{break}
+  {\topsep}{\topsep}%
+  {\itshape}{}%
+  {\bfseries}{}%
+  {\newline}{}%
+
+\theoremstyle{break}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\newtheorem{lemma}{Lemma}
+\newtheorem{example}{Example}
+\newcommand{\nonterminal}[1]{\langle \text{#1}\rangle}
+\newcommand{\rem}[0]{\text{ rem }}
+\newcommand{\interp}[1]{\llbracket #1 \rrbracket}
+\newcommand{\bbot}[0]{\Perp}
+\newcommand{\TODO}[1]{TODO : #1}
+
+\setcounter{chapter}{3}
+
+\title{CS520 Lecture 3\\Simple Imperative Language}
+\Large
+\maketitle
+
+\section{Motivation or objective}
+1. Most real-world PLs support computation by state update and that by function application. The former is often referred as imperative computation, and the latter as functional or applicative computation. Our goal is to study core of PL concepts and ideas for imperative computation. \\
+2. Acutally, it is more appropriate to say that our aim is a formal \& mathematical analysis of the core PL concepts for imperative computation. We will study or learn mathematical tools for this. Also, we will show how to express and analyze big design decisions of such an imperative PLs. \\
+3. We will look at 1) some basic concepts and results of domain theory, 2) variable declaration and binding, 3) syntactic sugar, error handling and 4) the notions of soundness and full abstraction. (Well, I just listed all the key items in the chapter 2 of the book) \\
+4. A good way to learn the material of this chapter is to ask yourself : What should you do in order to design an imperative programming language and build a foundation of the designed language? \\
+Think about this a little bit, and compare your answer with what I'll explain.
+\section{Syntax}
+1. Variables, and read and update of them $\ldots$ key concepts or operations for imperative computation. \\
+2. Syntax supports these concepts and operations:
+\begin{align*}
+    &\nonterminal{intexp} ::= 0|1|\ldots|\nonterminal{var}\footnote{reading of a variable}|\ldots - \text{ same as before}\\
+    &\nonterminal{boolexp} ::= true|false| \ldots - \\
+    &\text{almost the same as that of }\nonterminal{assert}.\\
+    &\text{The exception is that }\nonterminal{boolexp}\text{ doesn't include quantifiers. Q. why?}\\
+    &\nonterminal{comm} ::= \nonterminal{var} := \nonterminal{intexp}\footnote{update of a variable} | skip | \nonterminal{comm} ;\nonterminal{comm}\footnote{order matters} \\
+    &|\text{if }\nonterminal{boolexp} \text{ then }\nonterminal{comm} \text{ else }\nonterminal{comm} \\
+    &|\text{while }\nonterminal{boolexp} \text{ do }\nonterminal{comm}
+\end{align*}
+As in the case of predicate logic, you can understand $\nonterminal{comm}$ as the set of all finite derivation trees, or as an (multi-sorted) initial algebra for the signature determined by the grammar. \\
+3. It is language for expressing a sequence of variable reads and variable updates.
+\section{Basic domain theory}
+1. Giving a denotational semantics to our simple imperative language is not as straightforward as doing so with predicate logic, because of loop. \\
+2. $\interp{-}:\nonterminal{comm} \rightarrow \ldots$
+We want the following equation for loop holding to hold:
+\begin{align*}
+    \interp{\text{while }b \text{ do }c} &= \interp{\text{if }b\text{ then }(c;\text{while }b \text{ do }c)\text{ else }skip}\\
+    &=\ldots \interp{\text{while }b \text{ do }c}\ldots \\
+    &=F(\interp{\text{while }b \text{ do }c}) \text{ for some }F
+\end{align*}
+But a function F on a set may or may not have such fixed point. \\
+3. Then, why should F in the above have a fixed point? Because it is something that can be implemented by a program.
+\[F\stackrel{informally}{``="}\interp{\text{if }b\text{ then }(c;-)\text{ else }skip}\]
+One objective of domain theory is to formalise good properties enjoyed by such program-implementable functions without going the low-level details of computability theory. \\
+4. High-level meta heuristic behind domain theory
+\begin{enumerate}
+    \item Consider a set together with some structure.
+    \item Use functions between such sets that respect the structures.
+    \item Why 1) and 2)? Because if done well, functions in 2) will always have fixed points.
+\end{enumerate}
+5. Key definitions
+\begin{definition}
+    A binary relation $\sqsubseteq$ on a sset S is a partial order if
+    \begin{enumerate}
+        \item $x\sqsubseteq$ for all $x \in S$ (reflexivity)
+        \item for all $x, y, z\in S$, if $x\sqsubseteq y$ and $y \sqsubseteq z$, then $x \sqsubseteq z$ (transivity)
+        \item for all $x, y \in S$, if $x \sqsubseteq y$ and $y \sqsubseteq x$, then $x=y$.
+    \end{enumerate}
+    A set S with a partial order $sqsubseteq$ is called partially ordered set of poset.
+\end{definition}
+\begin{definition}
+    A chain in a poset $(S, \sqsubseteq)$ is a (countably) infinite sequence
+    \[x_0, x_1, \ldots, x_n, \ldots\]
+    of elements in $S$ s.t. $x_n \sqsubseteq s_{n+1}$ for all $n \le 0$.
+\end{definition}
+\begin{definition}
+    A pre-domain is a poset $(S, \sqsubseteq)$ s.t. all chains have least upper bounds. \\
+    meaning : For every chain $\{x_n\}_{n\le 0} \in S$, there exists $y=\sqcup_{n=0}^\infty x_n \in S$ s.t. \\
+    1) $x_n \sqsubseteq y$ for all $n \le 0$ \\
+    2) for any z, if $x_n \sqsubseteq z$ for every $n$, then $y \sqsubseteq z$.
+\end{definition}
+\begin{definition}
+    A domain is a pre-domain $(S, \sqsubseteq)$ that has the least element, often denoted $\bot$. \\
+    maening : for all $x \in S, \bot \sqsubseteq x$.
+\end{definition}
+\begin{definition}
+    Let $(S_1, \sqsubseteq_1)$ and $(S_2, \sqsubseteq_2)$ be pre-domains. \\
+    A function $f\in [S_1 \rightarrow S_2]$ is continuous if \\
+    for every chain $\{x_n\}_{n\le 0}$ in S, $f(\sqcup_{n=0}^\infty x_n)$ is the least upper bound of $\{f(x_n)\}_{n\le 0}$\\
+    A function $f \in [S_1 \rightarrow S_2]$ is monotone if for all $x, y \in S_1$, $x\sqsubseteq y \Rightarrow f(x) \sqsubseteq f(y)$. \\
+    When $S_1$ and $S_2$ are domains with least elements $\bot_1$ and $\bot_2$, we say that a function $f\in [S_1 \rightarrow S_2]$ is strict if $f(\bot_1) = \bot_2$.
+\end{definition}
+Exercise : Show that if f is continuous, it is monotone. \\
+6. What's going on here? What are the intuituions behind these definitions?
+\begin{enumerate}
+    \item $x \sqsubseteq y$ - intuitively means that y has more information than x or x and y have the same amount of info.
+    \begin{enumerate}
+        \item $\mathbb{Z}^{*, \omega} = \mathbb{Z}^* \cup \mathbb{Z}^\omega$ - finite or infinite sequence of integers. \\
+        $x\sqsubseteq y$ iff $x$ is an initial subsequence (or prefix) of $y$.
+        \[\langle 3, 1, 4 \rangle \sqsubseteq \langle 3, 1, 4, 1, 5 \rangle\]
+        \[\langle 3, 1, 4 \rangle \not\sqsubseteq \langle 2, 1, 4, 1 \rangle\]
+        \item $\mathbb{Z}_\bot=\mathbb{Z}\cup \{\bot\}$ - lifted $\mathbb{Z}$ \\
+        \[\forall x, y \in \mathbb{Z}_\bot \quad x\sqsubseteq y iff x=y \text{ or }x=\bot\]
+        \item $(2^{\mathbb{Z}}, \subset)$
+        \item vertical domain of natural numbers - $\begin{array}{c}\infty=:\top \\\vdots \\ 1 \\ \bot=0\end{array}$
+    \end{enumerate}
+    \item The monotonicity means the preservation of the approximation relation. \\
+    One intuition behind continuity of f is that in order to produce finite amound of information in its output, f consumes only finite amount information in its input.
+    \begin{enumerate}
+        \item $set \in [\mathbb{Z}^{*, \omega}\rightarrow 2^{\mathbb{Z}}]$ \\
+        \begin{align*}
+            &set(\langle x_1, \ldots, x_n \rangle) = \{x_1, \ldots, x_n\} \\
+            &set(\langle x_1, \ldots, x_n, \ldots \rangle) = \{x_1, \ldots, x_n, \ldots\}
+        \end{align*}
+        If $A \subset set(s)$ and $A$ is finite, then there is a finite prefix $s_0$ of $s$ (i.e., $s_0 \sqsubseteq s$) s.t. $A \subset set(s_0)$ \\
+        Exercise : Show that if $f\in [\mathbb{Z}^{*, \omega} \rightarrow 2^{\mathbb{Z}}]$ is continuous, it satisfies above property. Also show that if $f\in [\mathbb{Z}^{*, \omega} \rightarrow 2^{\mathbb{Z}}]$ satisfies above property, then f is continuous.
+        \item $f\in [2^\mathbb{Z} \rightarrow \mathbb{N}^\top]$ \\
+        $f(A) = \begin{cases}
+            |A| & \text{if }A \text{ is finite} \\
+            \top & \text{if }A \text{ is finite}
+        \end{cases}$ \\
+        Exercise : A function from $2^\mathbb{Z}$ to a predomain $P$ is finitely generated if for all $A\in 2^\mathbb{Z}$, $f(A)$ is the least upper bound of $\{f(A_0):A_0 \stackrel{\subset}{fin} A\}$. \\
+        Show that f is continuous iff it is finitely generated.
+        \item John Reynolds' phrase in page 108:\\
+        ``Instead, it is based on the physical limitations of communication:one cannot predict the future of input, nor receive an infinite amound of information in a finite amount of time, nor produce output except at finite times."\footnote{Domain theory attempty to capture this aspect of computation.}
+    \end{enumerate}
+\end{enumerate}
+7. One important reason of doing domain theory is to have the following ``least fixed-point theorem":
+\begin{proposition}[Least Fixed-Point Theorem]
+    If $D$ is a domain and $f$ is a continuous function from $D$ to $D$, \[x=\sqcup_{n=0}^\infty f^n \bot\]
+    is the least fixed-point of $f$. (That is, $f(x)=x$ and whenever $f(y)=y$, we have $x\sqsubseteq y$)
+\end{proposition}
+\begin{proof}
+    By the exercise before, $f$ is monotone. Using induction and $\bot$ is being the least element, we can show that $\{f^n \bot\}_{n\le 0}$ is a chain in $D$. Since $D$ is a domain, the least upper bound $x:=\sqcup_{n=0}^\infty f^n \bot$ exists. Furthermore, by the continuity of $f$,
+    \[f(x) = f(\sqcup_{n=0}^\infty f^n \bot) = \sqcup_{n=0}^\infty f^{n+1}(\bot) = \sqcup_{n=0}^\infty f^n(\bot) = x\]
+    $\therefore x$ is a fixed point of $f$. \\
+    To show that $x$ is a least such, consider a fixed point $y$ of $f$. \\
+    Then, by induction, we can sow that $y$ is an upper bound of the chain $\{f^n \bot\}_{n\le 0}$. $\therefore x\sqsubseteq y$.
+\end{proof}
+8. When $P, P'$ are predomains, we write $[P\rightarrow_c P']$ for the set of continuous functions. When $[P\rightarrow_c P']$\footnote{Although we rush here, this function space construction is very important. It lets domain theory be applicable to functional languages} is given pointwise order $\sqsubseteq$
+\[f\sqsubseteq g \text{ iff } f(x)\sqsubseteq_{P'} g(x)\text{ for all }x\in P, f, g \in [P\rightarrow_c P']\]
+it becomes a predomain, where the limit of a chain $\{f_n\}_{n\le 0}$ is defined pointwise $x\mapsto \sqcup_{n=0}^\infty f_n(x)$. Furthermore, if $P'$ is a domain with the least element $\bot'$, then $[P\rightarrow_c P']$ is also a domain with $x\mapsto \bot'$ as its least element. \\
+9. $D$ is a domain with the least element $\bot$. \\
+Define $Y_D$ to be the following function from $[D\rightarrow_c D]$ to $D$:
+\[Y_D(f) = \sqcup_{n=0}^\infty f^n \bot\]
+\begin{lemma}
+    $Y_D$ is continuous.\footnote{This means that the very act of computing a fixed point of a given function is continuous.}
+\end{lemma}
+\begin{proof}
+    Exercise.
+\end{proof}
+10. There are a lot of interesting results in domain theory, some of which we will ocver later in the course. Before finishing this mini review of domain theory, I want to explain the lifting construction.
+\begin{enumerate}
+    \item $P_\bot := P \cup \{\bot\}$ for a predomain P.
+    \[x\sqsubseteq_{P_\bot} y \text{ iff }x=\bot \text{ or }x, y\in P \text{ and }x\sqsubseteq_P y \text{ for }x, y \in P_\bot\]
+    Intuitively, we are adding the least element to $P$ and converting $P$ to a domain.
+    \item $i_\uparrow \in [P\rightarrow_c P_\bot]$, sometimes called unit, $i_\uparrow (x) = x$
+    \item for each $f\in [P\rightarrow_c P_\bot']$,
+    \begin{align*}
+        &f_\bbot \in [P_\bot \rightarrow_c P_\bot'] \\
+        &f_\bbot (\bot) := \bot \\
+        &f_\bbot (x) := f(x)
+    \end{align*}
+    sometimes called kleisli extension.
+    \item Why should we care about 2. and 3. ? Because they allow us to compose continuous function from $P$ to $P_\bot'$
+    \[f\in [P\rightarrow_c P_\bot' ]\text{ and }g\in [P' \rightarrow_c P_\bot'']\]
+    \[\Rightarrow (g_\bbot \circ f)\in [P\rightarrow_c P_\bot'']\footnote{We can view $(-)_\bbot \circ (c)$ as a new composition operator $\circ'$}\]
+\end{enumerate}
+\section{Denotational Semantics of the simple imperative language}
+1. Recall that $\Sigma = \nonterminal{var}\rightarrow \mathbb{Z}$. $\Sigma$ is a predomain when given the discrete order $\sqsubseteq$, $x\sqsubseteq y$ iff $x=y$
+\begin{align*}
+    &\interp{-}_{intexp} \in \nonterminal{intexp} \rightarrow [\Sigma \rightarrow \mathbb{Z}] \\
+    &\interp{-}_{boolexp} \in \nonterminal{boolexp} \rightarrow [\Sigma \rightarrow \mathbb{B}] \\
+    &\interp{-}_{comm} \in \nonterminal{comm} \rightarrow [\Sigma \rightarrow_c \Sigma_\bot]
+\end{align*}
+\begin{align*}
+    &\interp{x:=e}\sigma = [\sigma | x:\interp{e}\sigma] \\
+    &\interp{skip}\sigma = \sigma \\
+    &\interp{c_1;c_2}\sigma = \interp{c_2}_\bbot (\interp{c_1}\sigma) \\
+    &\interp{\text{if }b\text{ then }c_1 \text{ else }c_2} \sigma = \text{if }\interp{b}\sigma \text{ then }\interp{c_1}\sigma \text{ else }\interp{c_2}\sigma \\
+    &\interp{\text{while }b\text{ do }c}\sigma = Y_{\Sigma_\bot}(F) \\
+    &\text{where }F\in [\Sigma\rightarrow_c \Sigma_\bot] \rightarrow_c [\Sigma \rightarrow_c \Sigma_\bot] \\
+    &F f x \sigma := \text{if }\interp{b}\sigma \text{ then }(f_\bbot \circ \interp{c}) \sigma \text{ else }\sigma
+\end{align*}
+2. Why least fixed point? Because the least fixed point maps an input state to $\bot$ (denoting non-termination, hence, the absence of any information) whenever the corresponding output state is not uniquely determined by the equation $F(f)=f$.
+\begin{enumerate}
+    \item least fixed point - $\interp{\text{while }true \text{ do }skip}\sigma = \bot$
+    \item non-least fixed point - $\interp{\text{while }true \text{ do }skip}\sigma = \sigma$
+    \begin{align}
+        F(f)\sigma &= \text{if }\interp{true}\sigma \begin{cases}
+            \text{ then }(f_\bbot \circ \interp{skip})\sigma \\
+            \text{ else }\sigma
+        \end{cases} \\
+        &= f(\sigma)
+    \end{align}
+    That is, F(f) = f
+\end{enumerate}
+Later when we consider the correspondence between denotational semantics and operational semantics, we will answer this question more rigorously.\\
+3. Design decision of our language seen in the semantics
+\[\interp{e}_{intexp}:\nonterminal{intexp}\rightarrow \Sigma \rightarrow \mathbb{Z}\]
+all integer expressions terminate and do not raise exceptions. A similar remark applies to boolean expressions as well. \\
+4. Choosing the type of the semantics function such as $\interp{-}_{intexp}$ is the most important step in defining the semantics. It also clarifies certain major design decisions of the target PL.
+\section{Variable declaration and substitution}
+\TODO{add 4 sections left...}
+\end{document}
