@@ -3,6 +3,7 @@
 \usepackage{mathtools,enumitem,amssymb,amsmath,kotex,amsfonts,listings,stmaryrd,amsthm}
 \usepackage{xfrac,txfonts}
 \usepackage{graphicx}
+\usepackage{mathrsfs}
 \usepackage{subcaption}
 \usepackage{ebproof}
 \usepackage{tikz}
@@ -219,5 +220,67 @@ Later when we consider the correspondence between denotational semantics and ope
 all integer expressions terminate and do not raise exceptions. A similar remark applies to boolean expressions as well. \\
 4. Choosing the type of the semantics function such as $\interp{-}_{intexp}$ is the most important step in defining the semantics. It also clarifies certain major design decisions of the target PL.
 \section{Variable declaration and substitution}
-\TODO{add 4 sections left...}
+1. \[\nonterminal{comm}::=\text{newvar }\nonterminal{var}:=\nonterminal{intexp} \text{ in }\nonterminal{comm}\]
+Construct that doesn't increase the expressivity of the language but enables the programmers to combat the complexity of software by introducity the idea of scope and local variables. \\
+2. \[\interp{\text{newvar }v:=e \text{ in }c}\sigma = (\underbrace{(\lambda \sigma'\in \Sigma. [\sigma'|v:\sigma v])_\bbot}_{\text{restore the old value}}\footnote{means the function $\sigma'\mapsto[\sigma'|v:\sigma v]$} \circ \underbrace{\interp{c}}_{\text{run the body}})(\underbrace{[\sigma|v:\interp{e}\sigma]}_{initialize})\]
+We didn't have to do something like this when we interpreted quantifications in predicate logic. This is because there we didn't return a state, but a boolean value. \\
+3. How do we know that this is a sensible definition? By checking exprected properties like Coincidence [Prop2.6], Renaming [Prop2.8].\\
+\[FV(c) - \text{free variables appearing in }c \text{ p40}\]
+\[FA(c) - \text{free assigned variables appearing in }c \text{ p41}\]
+\begin{proposition}[Coincidence]
+    \begin{align*}
+        (a) &\sigma \omega = \sigma' \omega\text{ for all }\omega \in FV(c) \\
+        &\Rightarrow (\interp{c}\sigma = \interp{c}\sigma' = \bot) \text{ or} \\
+        &\quad (\interp{c}\sigma, \interp{c}\sigma' \in \Sigma \text{ and }(\interp{c}\sigma)(\omega) = (\interp{c}\sigma'(\omega \text{ for all }\omega \in FV(c)))\\
+        (b) &\interp{c}\sigma \neq \bot \Rightarrow (\interp{c}\sigma)(\omega) = \sigma \omega \text{ for all }\omega \notin FA(c)
+    \end{align*}
+\end{proposition}
+\begin{proposition}[Renaming]
+    \begin{align*}
+        &v_{new}\notin FV(c') - \{v\} \\
+        &\Rightarrow \interp{\text{newvar }v:=e \text{ in }c'}\sigma = \interp{text{newvar }v_{new}:=e \text{ in }\sfrac{c'}{v\rightarrow v_{new}}}\sigma
+    \end{align*}
+\end{proposition}
+\section{Syntactic Sugar}
+1. Introduction of a construct by defining its meaning in terms of existing constructs in the language. \\
+2. Three definitions of for loop:
+\begin{enumerate}
+    \item $(\text{for }v:=e_0 \text{ to }e_1 d_0 c):=(v:=e_0;\text{while }v\le e_1 d_0 (c;v:=v+1))$
+    \item $(\text{for }v:=e_0 \text{ to }e_1 d_0 c):=(\text{newvar }v:=e_0\text{ in while }v\le e_1 \text{ do }(c;v:=v+1))$
+    \item $(\text{for }v:=e_0 \text{ to }e_1 d_0 c):=(\text{newvar }w:=e_1 \text{ in newvar }v:=e_0 \text{ in while }v\le w\text{ do }(c;v:=v+1))$\\
+    where $w\neq v$ and $w \notin FV(e_0)\cup FV(c)$
+    \item 3. with the condition $v\notin FV(c)$
+\end{enumerate}
+3. The for loop should be something easier to understand while. In this regard, 1 < 2 < 3 < 4.
+\section{Arithmetic Errors}
+1. How should we deal with $x\div 0$ or underflow/overflow? \\
+2. Two approaches
+\begin{enumerate}
+    \item early stop with error
+    \item some default choice and computation continued. \\
+    but it can become less ad hoc if we ensure that the default choices satisfy certain properties such as
+    \begin{align*}
+        \interp{(x\div y)\times 0}\sigma = 0 \\
+        \interp{x\div 0 = x \div 0}\sigma = tt \\
+        \interp{y:=x\div 0;y:=e} \sigma = \interp{y:=e}\sigma \text{ when }y \notin FV(e) \\
+        \interp{\text{if }x\div y=z\text{ then }c \text{ else }c}=\interp{c}\sigma
+    \end{align*}
+\end{enumerate}
+\section{Soundness and Full abstraction}
+1. The semantics defined so far looks ok, but is there any formal way to confirm this? \\
+2. One approach is to show that the semantics assigns the same meaning to two commands $c_1$ and $c_2$ only when $c_1$ and $c_2$ should be equal intuitively. That is,
+\[\interp{c_1}=\interp{c_2}\Rightarrow c_1 \stackrel{=}{\text{our intuitive notion of\\equality defined separately}} c_2\]
+This property is called soundness. Its converse is called full abstraction. \\
+\[\interp{c_1}=\interp{c_2}\Leftarrow c_1 = c_2\]
+3. Now how to define $``="$? \\
+We use a set of observable phrases with a hole or contexts, $\mathscr{C}$, and a set of observations, $\mathscr{O}$, which are functions from observable phrases to outcomes.
+\[c_1 ``=" c_2 \text{ iff }\forall c\in \mathscr{C} \underline{\forall O \in \mathscr{O}}\footnote{1. Intuitively this condition says that under all use cases, the user cannot observe the difference between $c_1$ and $c_2$. \\
+2. This is sometimes called observational equivalence. \\
+3. Note that this is not a syntax-directed (or compositional) definition.} O(\underbrace{C[c_1]}_{\text{filling the hole of }C\text{ with }c_1})=O(C[c_2])\]
+Example : Assume that $v_0, \ldots, v_{n-1}$ are all the free variables in $c_1$ and $c_2$.
+\[\mathscr{C} = \{\begin{array}{c}\text{newvar }v_0:=k_0 \text{ in }\\ \text{newvar }v_1:=k_1 \text{ in }\\ \vdots\\ \text{newvar }v_{n-1}:=k_{n-1} \text{ in }\\([-];\text{if }v_i=k \text{ then }skip \text{ else while }true \text{ do }skip)\end{array}: \begin{array}{c}k_0, k_1, \ldots, k_{n-1}\in \mathbb{Z} \\i\in\{0, \ldots, n-1\}\end{array} \}\]
+    \[\mathscr{O}=\{\lambda c. \text{if }\interp{c}\sigma_0 = \bot \text{ then }0 \text{ else }1\}\]
+    where $\sigma_0(x)=0$ for all $x$\\
+
+
 \end{document}
