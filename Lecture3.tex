@@ -12,6 +12,8 @@
 \usetikzlibrary{cd}
 \begin{document}
 
+\setlength\parindent{0pt}
+
 \newtheoremstyle{break}
   {\topsep}{\topsep}%
   {\itshape}{}%
@@ -39,13 +41,18 @@
 \maketitle
 
 \section{Motivation or objective}
-1. Most real-world PLs support computation by state update and that by function application. The former is often referred as imperative computation, and the latter as functional or applicative computation. Our goal is to study core of PL concepts and ideas for imperative computation. \\
-2. Acutally, it is more appropriate to say that our aim is a formal \& mathematical analysis of the core PL concepts for imperative computation. We will study or learn mathematical tools for this. Also, we will show how to express and analyze big design decisions of such an imperative PLs. \\
-3. We will look at 1) some basic concepts and results of domain theory, 2) variable declaration and binding, 3) syntactic sugar, error handling and 4) the notions of soundness and full abstraction. (Well, I just listed all the key items in the chapter 2 of the book) \\
-4. A good way to learn the material of this chapter is to ask yourself : What should you do in order to design an imperative programming language and build a foundation of the designed language? \\
+1. Most real-world PLs support computation by state update and that by function application. The former is often referred as imperative computation, and the latter as functional or applicative computation. Our goal is to study core of PL concepts and ideas for imperative computation.
+
+2. Acutally, it is more appropriate to say that our aim is a formal \& mathematical analysis of the core PL concepts for imperative computation. We will study or learn mathematical tools for this. Also, we will show how to express and analyze big design decisions of such an imperative PLs.
+
+3. We will look at 1) some basic concepts and results of domain theory, 2) variable declaration and binding, 3) syntactic sugar, error handling and 4) the notions of soundness and full abstraction. (Well, I just listed all the key items in the chapter 2 of the book)
+
+4. A good way to learn the material of this chapter is to ask yourself : What should you do in order to design an imperative programming language and build a foundation of the designed language?
+
 Think about this a little bit, and compare your answer with what I'll explain.
 \section{Syntax}
-1. Variables, and read and update of them $\ldots$ key concepts or operations for imperative computation. \\
+1. Variables, and read and update of them $\ldots$ key concepts or operations for imperative computation.
+
 2. Syntax supports these concepts and operations:
 \begin{align*}
     &\nonterminal{intexp} ::= 0|1|\ldots|\nonterminal{var}\footnote{reading of a variable}|\ldots - \text{ same as before}\\
@@ -56,7 +63,8 @@ Think about this a little bit, and compare your answer with what I'll explain.
     &|\text{if }\nonterminal{boolexp} \text{ then }\nonterminal{comm} \text{ else }\nonterminal{comm} \\
     &|\text{while }\nonterminal{boolexp} \text{ do }\nonterminal{comm}
 \end{align*}
-As in the case of predicate logic, you can understand $\nonterminal{comm}$ as the set of all finite derivation trees, or as an (multi-sorted) initial algebra for the signature determined by the grammar. \\
+As in the case of predicate logic, you can understand $\nonterminal{comm}$ as the set of all finite derivation trees, or as an (multi-sorted) initial algebra for the signature determined by the grammar.
+
 3. It is language for expressing a sequence of variable reads and variable updates.
 \section{Basic domain theory}
 1. Giving a denotational semantics to our simple imperative language is not as straightforward as doing so with predicate logic, because of loop. \\
@@ -67,10 +75,12 @@ We want the following equation for loop holding to hold:
     &=\ldots \interp{\text{while }b \text{ do }c}\ldots \\
     &=F(\interp{\text{while }b \text{ do }c}) \text{ for some }F
 \end{align*}
-But a function F on a set may or may not have such fixed point. \\
+But a function F on a set may or may not have such fixed point.
+
 3. Then, why should F in the above have a fixed point? Because it is something that can be implemented by a program.
 \[F\stackrel{informally}{``="}\interp{\text{if }b\text{ then }(c;-)\text{ else }skip}\]
-One objective of domain theory is to formalise good properties enjoyed by such program-implementable functions without going the low-level details of computability theory. \\
+One objective of domain theory is to formalise good properties enjoyed by such program-implementable functions without going the low-level details of computability theory.
+
 4. High-level meta heuristic behind domain theory
 \begin{enumerate}
     \item Consider a set together with some structure.
@@ -93,23 +103,32 @@ One objective of domain theory is to formalise good properties enjoyed by such p
     of elements in $S$ s.t. $x_n \sqsubseteq s_{n+1}$ for all $n \le 0$.
 \end{definition}
 \begin{definition}
-    A pre-domain is a poset $(S, \sqsubseteq)$ s.t. all chains have least upper bounds. \\
-    meaning : For every chain $\{x_n\}_{n\le 0} \in S$, there exists $y=\sqcup_{n=0}^\infty x_n \in S$ s.t. \\
-    1) $x_n \sqsubseteq y$ for all $n \le 0$ \\
+    A pre-domain is a poset $(S, \sqsubseteq)$ s.t. all chains have least upper bounds.
+
+    meaning : For every chain $\{x_n\}_{n\le 0} \in S$, there exists $y=\sqcup_{n=0}^\infty x_n \in S$ s.t.
+
+    1) $x_n \sqsubseteq y$ for all $n \le 0$
+
     2) for any z, if $x_n \sqsubseteq z$ for every $n$, then $y \sqsubseteq z$.
 \end{definition}
 \begin{definition}
-    A domain is a pre-domain $(S, \sqsubseteq)$ that has the least element, often denoted $\bot$. \\
-    maening : for all $x \in S, \bot \sqsubseteq x$.
+    A domain is a pre-domain $(S, \sqsubseteq)$ that has the least element, often denoted $\bot$.
+
+    meaning : for all $x \in S, \bot \sqsubseteq x$.
 \end{definition}
 \begin{definition}
-    Let $(S_1, \sqsubseteq_1)$ and $(S_2, \sqsubseteq_2)$ be pre-domains. \\
-    A function $f\in [S_1 \rightarrow S_2]$ is continuous if \\
-    for every chain $\{x_n\}_{n\le 0}$ in S, $f(\sqcup_{n=0}^\infty x_n)$ is the least upper bound of $\{f(x_n)\}_{n\le 0}$\\
-    A function $f \in [S_1 \rightarrow S_2]$ is monotone if for all $x, y \in S_1$, $x\sqsubseteq y \Rightarrow f(x) \sqsubseteq f(y)$. \\
+    Let $(S_1, \sqsubseteq_1)$ and $(S_2, \sqsubseteq_2)$ be pre-domains.
+
+    A function $f\in [S_1 \rightarrow S_2]$ is continuous if
+
+    for every chain $\{x_n\}_{n\le 0}$ in S, $f(\sqcup_{n=0}^\infty x_n)$ is the least upper bound of $\{f(x_n)\}_{n\le 0}$
+
+    A function $f \in [S_1 \rightarrow S_2]$ is monotone if for all $x, y \in S_1$, $x\sqsubseteq y \Rightarrow f(x) \sqsubseteq f(y)$.
+
     When $S_1$ and $S_2$ are domains with least elements $\bot_1$ and $\bot_2$, we say that a function $f\in [S_1 \rightarrow S_2]$ is strict if $f(\bot_1) = \bot_2$.
 \end{definition}
-Exercise : Show that if f is continuous, it is monotone. \\
+Exercise : Show that if f is continuous, it is monotone.
+
 6. What's going on here? What are the intuituions behind these definitions?
 \begin{enumerate}
     \item $x \sqsubseteq y$ - intuitively means that y has more information than x or x and y have the same amount of info.
@@ -158,8 +177,10 @@ Exercise : Show that if f is continuous, it is monotone. \\
 \end{proof}
 8. When $P, P'$ are predomains, we write $[P\rightarrow_c P']$ for the set of continuous functions. When $[P\rightarrow_c P']$\footnote{Although we rush here, this function space construction is very important. It lets domain theory be applicable to functional languages} is given pointwise order $\sqsubseteq$
 \[f\sqsubseteq g \text{ iff } f(x)\sqsubseteq_{P'} g(x)\text{ for all }x\in P, f, g \in [P\rightarrow_c P']\]
-it becomes a predomain, where the limit of a chain $\{f_n\}_{n\le 0}$ is defined pointwise $x\mapsto \sqcup_{n=0}^\infty f_n(x)$. Furthermore, if $P'$ is a domain with the least element $\bot'$, then $[P\rightarrow_c P']$ is also a domain with $x\mapsto \bot'$ as its least element. \\
-9. $D$ is a domain with the least element $\bot$. \\
+it becomes a predomain, where the limit of a chain $\{f_n\}_{n\le 0}$ is defined pointwise $x\mapsto \sqcup_{n=0}^\infty f_n(x)$. Furthermore, if $P'$ is a domain with the least element $\bot'$, then $[P\rightarrow_c P']$ is also a domain with $x\mapsto \bot'$ as its least element.
+
+9. $D$ is a domain with the least element $\bot$.
+
 Define $Y_D$ to be the following function from $[D\rightarrow_c D]$ to $D$:
 \[Y_D(f) = \sqcup_{n=0}^\infty f^n \bot\]
 \begin{lemma}
@@ -214,17 +235,22 @@ Define $Y_D$ to be the following function from $[D\rightarrow_c D]$ to $D$:
     \end{align}
     That is, F(f) = f
 \end{enumerate}
-Later when we consider the correspondence between denotational semantics and operational semantics, we will answer this question more rigorously.\\
+Later when we consider the correspondence between denotational semantics and operational semantics, we will answer this question more rigorously.
+
 3. Design decision of our language seen in the semantics
 \[\interp{e}_{intexp}:\nonterminal{intexp}\rightarrow \Sigma \rightarrow \mathbb{Z}\]
-all integer expressions terminate and do not raise exceptions. A similar remark applies to boolean expressions as well. \\
+all integer expressions terminate and do not raise exceptions. A similar remark applies to boolean expressions as well.
+
 4. Choosing the type of the semantics function such as $\interp{-}_{intexp}$ is the most important step in defining the semantics. It also clarifies certain major design decisions of the target PL.
 \section{Variable declaration and substitution}
 1. \[\nonterminal{comm}::=\text{newvar }\nonterminal{var}:=\nonterminal{intexp} \text{ in }\nonterminal{comm}\]
-Construct that doesn't increase the expressivity of the language but enables the programmers to combat the complexity of software by introducity the idea of scope and local variables. \\
+Construct that doesn't increase the expressivity of the language but enables the programmers to combat the complexity of software by introducity the idea of scope and local variables.
+
 2. \[\interp{\text{newvar }v:=e \text{ in }c}\sigma = (\underbrace{(\lambda \sigma'\in \Sigma. [\sigma'|v:\sigma v])_\bbot}_{\text{restore the old value}}\footnote{means the function $\sigma'\mapsto[\sigma'|v:\sigma v]$} \circ \underbrace{\interp{c}}_{\text{run the body}})(\underbrace{[\sigma|v:\interp{e}\sigma]}_{initialize})\]
-We didn't have to do something like this when we interpreted quantifications in predicate logic. This is because there we didn't return a state, but a boolean value. \\
-3. How do we know that this is a sensible definition? By checking exprected properties like Coincidence [Prop2.6], Renaming [Prop2.8].\\
+We didn't have to do something like this when we interpreted quantifications in predicate logic. This is because there we didn't return a state, but a boolean value.
+
+3. How do we know that this is a sensible definition? By checking exprected properties like Coincidence [Prop2.6], Renaming [Prop2.8].
+
 \[FV(c) - \text{free variables appearing in }c \text{ p40}\]
 \[FA(c) - \text{free assigned variables appearing in }c \text{ p41}\]
 \begin{proposition}[Coincidence]
@@ -242,7 +268,8 @@ We didn't have to do something like this when we interpreted quantifications in 
     \end{align*}
 \end{proposition}
 \section{Syntactic Sugar}
-1. Introduction of a construct by defining its meaning in terms of existing constructs in the language. \\
+1. Introduction of a construct by defining its meaning in terms of existing constructs in the language.
+
 2. Three definitions of for loop:
 \begin{enumerate}
     \item $(\text{for }v:=e_0 \text{ to }e_1 d_0 c):=(v:=e_0;\text{while }v\le e_1 d_0 (c;v:=v+1))$
@@ -253,7 +280,8 @@ We didn't have to do something like this when we interpreted quantifications in 
 \end{enumerate}
 3. The for loop should be something easier to understand while. In this regard, 1 < 2 < 3 < 4.
 \section{Arithmetic Errors}
-1. How should we deal with $x\div 0$ or underflow/overflow? \\
+1. How should we deal with $x\div 0$ or underflow/overflow?
+
 2. Two approaches
 \begin{enumerate}
     \item early stop with error
@@ -267,12 +295,15 @@ We didn't have to do something like this when we interpreted quantifications in 
     \end{align*}
 \end{enumerate}
 \section{Soundness and Full abstraction}
-1. The semantics defined so far looks ok, but is there any formal way to confirm this? \\
+1. The semantics defined so far looks ok, but is there any formal way to confirm this?
+
 2. One approach is to show that the semantics assigns the same meaning to two commands $c_1$ and $c_2$ only when $c_1$ and $c_2$ should be equal intuitively. That is,
 \[\interp{c_1}=\interp{c_2}\Rightarrow c_1 \stackrel{=}{\text{our intuitive notion of\\equality defined separately}} c_2\]
-This property is called soundness. Its converse is called full abstraction. \\
+This property is called soundness. Its converse is called full abstraction.
+
 \[\interp{c_1}=\interp{c_2}\Leftarrow c_1 = c_2\]
-3. Now how to define $``="$? \\
+3. Now how to define $``="$?
+
 We use a set of observable phrases with a hole or contexts, $\mathscr{C}$, and a set of observations, $\mathscr{O}$, which are functions from observable phrases to outcomes.
 \[c_1 ``=" c_2 \text{ iff }\forall c\in \mathscr{C} \underline{\forall O \in \mathscr{O}}\footnote{1. Intuitively this condition says that under all use cases, the user cannot observe the difference between $c_1$ and $c_2$. \\
 2. This is sometimes called observational equivalence. \\
@@ -280,7 +311,7 @@ We use a set of observable phrases with a hole or contexts, $\mathscr{C}$, and a
 Example : Assume that $v_0, \ldots, v_{n-1}$ are all the free variables in $c_1$ and $c_2$.
 \[\mathscr{C} = \{\begin{array}{c}\text{newvar }v_0:=k_0 \text{ in }\\ \text{newvar }v_1:=k_1 \text{ in }\\ \vdots\\ \text{newvar }v_{n-1}:=k_{n-1} \text{ in }\\([-];\text{if }v_i=k \text{ then }skip \text{ else while }true \text{ do }skip)\end{array}: \begin{array}{c}k_0, k_1, \ldots, k_{n-1}\in \mathbb{Z} \\i\in\{0, \ldots, n-1\}\end{array} \}\]
     \[\mathscr{O}=\{\lambda c. \text{if }\interp{c}\sigma_0 = \bot \text{ then }0 \text{ else }1\}\]
-    where $\sigma_0(x)=0$ for all $x$\\
+    where $\sigma_0(x)=0$ for all $x$
 
 
 \end{document}

@@ -11,6 +11,8 @@
 \usetikzlibrary{cd}
 \begin{document}
 
+\setlength\parindent{0pt}
+
 \newtheoremstyle{break}
   {\topsep}{\topsep}%
   {\itshape}{}%
@@ -36,31 +38,45 @@
 \maketitle
 
 \section{Motivation or Objective}
-1. Learn four key tools in PL that will be used throughout this course \\
+1. Learn four key tools in PL that will be used throughout this course
+
 \begin{enumerate}
     \item Abstract Syntax
     \item Denotational Semantics
     \item Inference rule
     \item Binding
 \end{enumerate}
-2. Learn the basics of predicate logic (or first-order logic)\\
-3. We plan to go through some of (1)-(4) twice, first using integer expressions and then using predicate logic.\\
+2. Learn the basics of predicate logic (or first-order logic)
+
+3. We plan to go through some of (1)-(4) twice, first using integer expressions and then using predicate logic.
+
 \section{Integer Expressions}
-1. How to analyze integer expressions found in logic and programming languages mathematically? We will first have to define the syntax and the semantics for them. \\
-2. Examples : $x+3\times y, x\div 2 + x \times x$\\
+1. How to analyze integer expressions found in logic and programming languages mathematically? We will first have to define the syntax and the semantics for them.
+
+2. Examples : $x+3\times y, x\div 2 + x \times x$
+
 3. We also want sto develop mathematical tools to reason about or manipulate integer expressions
 \section{Abstract Syntax and Initial Algebra}
-1. Abstract Syntax \\
-Specification of \underline{abstract phrases}\footnote{Vague words, but will be made rigorous when we define initial algebra} in a formal language, such as the language of integer expressions and predicte logics. \\
-2. Typically, we use \underline{abstract grammar}\footnote{Not accurate, but good approximate view. \\(1) grammar without any concren on parsing or surface syntax \\(2) In this case, parse trees in the grammar are abstract phrases} to describe abstract syntax. \\
-3. Abstract grammar for integer expressions: \\
+1. Abstract Syntax
+
+Specification of \underline{abstract phrases}\footnote{Vague words, but will be made rigorous when we define initial algebra} in a formal language, such as the language of integer expressions and predicte logics.
+
+2. Typically, we use \underline{abstract grammar}\footnote{Not accurate, but good approximate view.
+
+(1) grammar without any concren on parsing or surface syntax
+
+(2) In this case, parse trees in the grammar are abstract phrases} to describe abstract syntax.
+
+3. Abstract grammar for integer expressions:
+
 \begin{align*}
     \nonterminal{intexp}&::=0 | 1 | 2 | \ldots \\
     &| \nonterminal{var} | -\nonterminal{intexp} | \nonterminal{intexp} + \nonterminal{intexp} \\
     &| \nonterminal{intexp} - \nonterminal{intexp} | \nonterminal{intexp} \times \nonterminal{intexp} \\
     &| \nonterminal{intexp} \div \nonterminal{intexp} | \nonterminal{intexp} \rem \nonterminal{intexp}
 \end{align*}
-(abstract) Integer expressions are finite derivation trees in this grammar. For instance, \\
+(abstract) Integer expressions are finite derivation trees in this grammar. For instance,
+
 \begin{figure}
     \begin{tikzpicture}[level distance=1.5cm,
           level 1/.style={sibling distance=3cm},
@@ -87,10 +103,14 @@ Specification of \underline{abstract phrases}\footnote{Vague words, but will be 
         \end{tikzpicture}
     \caption{Finite derivation trees for integer expressions}
 \end{figure}
-Note that infinite trees are not included. \\
-4. A more accurate views is to view abstract syntax as an initial algebra. This view will help us to see why we can define various operations on abstract phrases or integer expressions using syntax-directed definition. \\
-5. Algebra A : Set with operations and constants. \\
-Signature S : Type of an algebra \\
+Note that infinite trees are not included.
+
+4. A more accurate views is to view abstract syntax as an initial algebra. This view will help us to see why we can define various operations on abstract phrases or integer expressions using syntax-directed definition.
+
+5. Algebra A : Set with operations and constants.
+
+Signature S : Type of an algebra
+
 \begin{enumerate}
     \item $S_{group} = (t, id:t, \circ:t\times t \rightarrow t, (-)^{-1}:t\rightarrow t$)
     \item $A_0 = (\mathbb{Z}, 0\in \mathbb{Z}, +:\mathbb{Z}\times \mathbb{Z}\rightarrow \mathbb{Z}, -:\mathbb{Z}\rightarrow \mathbb{Z})$
@@ -109,7 +129,8 @@ Signature S : Type of an algebra \\
     \begin{tikzcd}T \mapsto & -\arrow[d, dash] \\& T\end{tikzcd} \hspace{1cm}
     \begin{tikzcd}(T_1, T_2) \mapsto & &\times\arrow[ld, dash] \arrow[rd, dash]&\\&T_1&&T_2\end{tikzcd})
 \end{figure}
-6. Algebra Homomorphism \\
+6. Algebra Homomorphism
+
 Map between algebras that preserves constants and operations.
 \begin{align*}
     S=(&t, c_1:t, \ldots, c_n:t, \ldots, \\
@@ -124,36 +145,47 @@ $f\in \mu_0 \rightarrow \mu_1$ is a homomorphism if
     &(1) \forall j. f(c_j^0) = c_j^1  \\
     &(2) \forall i. f(op_j^0(x_1, \ldots, x_k)) = op_j^1 (f(x_1, \ldots, f(x_k)))
 \end{align*}
-7. Initial Algebra of a signature S\\
+7. Initial Algebra of a signature S
+
 \begin{itemize}
     \item An algebra A of the signature S s.t. \\
     for all algebras $A'$ of the same signature, there is a \underline{unique} homomorphism f from A to A'.
     \item $A_{grammar}$ is initial.
     \item Formally, an abstract syntax fixes a signature, and it denotes an initial algebra of the signature. An abstract phrase is an element of that algebra.
 \end{itemize}
-Exercise : Prove that $A_{grammar}$ is indeed an initial algebra. \\
-Exercise : Let $A_0, A_1$ be initial algebras of the same signatures S. \\
-Then, there are homomorphisms $f\in |A_0| \rightarrow |A_1|$ and $g \in |A_1| \rightarrow |A_0|$ s.t. $f\circ g = id, g\circ f = id$. \\
+Exercise : Prove that $A_{grammar}$ is indeed an initial algebra.
+
+Exercise : Let $A_0, A_1$ be initial algebras of the same signatures S.
+
+Then, there are homomorphisms $f\in |A_0| \rightarrow |A_1|$ and $g \in |A_1| \rightarrow |A_0|$ s.t. $f\circ g = id, g\circ f = id$.
+
 This means that all initial algebras of S are essentially the same, i.e. isomorphic. Prove this fact.
 \section{Syntax-directed definition and denotational semantics}
-1. Defenition of a map on integer expressions using a form of induction and case analysis \\
-2. $FV(e) = V$ (so, $FV:\nonterminal{intexp} \rightarrow 2^{\nonterminal{var}}$) \\
-FV : free variables, e : integer expression, V : set of free variables in e. \\
+1. Defenition of a map on integer expressions using a form of induction and case analysis
+
+2. $FV(e) = V$ (so, $FV:\nonterminal{intexp} \rightarrow 2^{\nonterminal{var}}$)
+
+FV : free variables, e : integer expression, V : set of free variables in e.
+
 \begin{align*}
     FV(c) = \o \text{ c is a constant}& FV(x) = \{x\} \text{ x is a variable}\\
     FV(-e) = FV(e) & FV(e_1 + e_2) = FV(e_1) \cup FV(e_2)
 \end{align*}
 3. Two features : case analysis, recursive calls on subphrases
-4. $\interp{ - } \in \nonterminal{intexp} \rightarrow \Sigma \rightarrow \mathbb{Z}$ \\
-where $\Sigma = \nonterminal{var} \rightarrow \mathbb{Z}$, a set of states $\sigma$. \\
+4. $\interp{ - } \in \nonterminal{intexp} \rightarrow \Sigma \rightarrow \mathbb{Z}$
+
+where $\Sigma = \nonterminal{var} \rightarrow \mathbb{Z}$, a set of states $\sigma$.
+
 \begin{align*}
     &\interp{ c } \sigma = c \\
     &\interp{ x } \sigma = \sigma(x) \\
     &\interp{ -e } \sigma = - \interp{ e } \sigma \\
     &\interp{ e_1 + e_2 } \sigma = \interp{ e_1 } \sigma + \interp{ e_2 } \sigma
 \end{align*}
-Intuitively, $\interp{ - }$ maps trees to mathematical functions in a syntax directed (also called compositional) way. Such a compositional mapping from syntactic entities to mathematical entities is called denotational semantics. \\
-5. In both cases, we are using the initiality of <intexp>. What are the target algebras in those cases? \\
+Intuitively, $\interp{ - }$ maps trees to mathematical functions in a syntax directed (also called compositional) way. Such a compositional mapping from syntactic entities to mathematical entities is called denotational semantics.
+
+5. In both cases, we are using the initiality of <intexp>. What are the target algebras in those cases?
+
 (1) \begin{align*}
     &|A_1| = 2^{\nonterminal{var}} \\
     &c^1 = \o \\
@@ -169,12 +201,16 @@ Intuitively, $\interp{ - }$ maps trees to mathematical functions in a syntax dir
     &-^2 (f)(\sigma) = -(f)(\sigma) \\
     &+^2 (f, g)(\sigma) = f(\sigma) + g(\sigma) & \times^2, \div^2, \rem^2 \text{ defined similarly}
 \end{align*}
-6. Exercise \\
-$\delta \in \nonterminal{var} \rightarrow \nonterminal{intexp}$ is substitution. \\
+6. Exercise
+
+$\delta \in \nonterminal{var} \rightarrow \nonterminal{intexp}$ is substitution.
+
 Define $\sfrac{e}{\delta}$, the application of substitution $\delta$ to $e$.
 \section{Structural induction}
-1. We want to show that some property $\phi$ holds for all integer expressions. What should we do? \\
-2. Use induction on the structure of expressions. \\
+1. We want to show that some property $\phi$ holds for all integer expressions. What should we do?
+
+2. Use induction on the structure of expressions.
+
 That is, for each expression e, prove the property assuming that the property holds for the subexpressions of e.
 \begin{lemma}[Coincidence]
     For every expression e and states $\sigma, \sigma'$, \\
@@ -208,20 +244,25 @@ That is, for each expression e, prove the property assuming that the property ho
 \begin{corollary}
     $\interp{ \sfrac{e}{x_1 \rightarrow e_1, \ldots, x_n \rightarrow e_n} } \sigma = \interp{ e } [\delta | x_1 : \interp{ e_1 } \delta, | \ldots | x_n : \interp{ e_n } \delta]$
 \end{corollary}
-This intuitively says the correspondence between syntactic and semantic substitutions. \\
+This intuitively says the correspondence between syntactic and semantic substitutions.
+
 3. Structural induction holds because of the initiality of <intexp>. Can you explain why it is the case?
 \section{Predicate logic (first-order logic) informally}
-1. Language for expressing (boolean) properties (also called assertions). \\
-2. Extensions of boolean expressions in programming languages with universal and existential quantifications. \\
+1. Language for expressing (boolean) properties (also called assertions).
+
+2. Extensions of boolean expressions in programming languages with universal and existential quantifications.
+
 3. Examples
 \begin{itemize}
     \item $\forall x. \forall y. \exists m. \exists n. x \times m + y \times n = 1$
     \item $\forall x. \exists y. y > x$
 \end{itemize}
-4. Quantifiers are over integers, reals, and other first-order entities (i.e. \underline{not} over sets of integers, and functions, etc). The "first-order" in first-order logic refers to this restriction. \\
+4. Quantifiers are over integers, reals, and other first-order entities (i.e. \underline{not} over sets of integers, and functions, etc). The "first-order" in first-order logic refers to this restriction.
+
 We will consider a version of predicate logic or first-order logic where quantifiers range over integers and all variables are integer variables.
 \section{Abstract Syntax of predicate logic}
-1. Described in terms of the following abstract grammar : \\
+1. Described in terms of the following abstract grammar :
+
 \begin{align*}
     \nonterminal{intexp} &::= 0 | 1 | 2 | \ldots \\
     &| \nonterminal{var} | -\nonterminal{intexp} | \nonterminal{intexp} \begin{array}{c} + \\ - \\ \times \\ \div \\ \rem \end{array} \nonterminal{intexp} \\
@@ -229,10 +270,14 @@ We will consider a version of predicate logic or first-order logic where quantif
     &| \neg \nonterminal{assert} | \nonterminal{assert} \begin{array}{c} \vee \\ \wedge \\ \Rightarrow \\ \Leftarrow \end{array} \nonterminal{assert} \\
     &| \begin{array}{c} \forall \\ \exists \end{array} \nonterminal{var}. \nonterminal{assert}
 \end{align*}
-To simplify presentation, we will consider only $+, \times, \wedge, \forall, =, >$. \\
-2. What do we mean by abstract grammar and abstract syntax here? \\
-If you got confused about initial-algebra stuff, just think that our abstract syntax is the set of all finite derivation or parse trees. \\
-If not, you can view the abstract syntax as the initial algebra of the signature induced by the grammar. \\
+To simplify presentation, we will consider only $+, \times, \wedge, \forall, =, >$.
+
+2. What do we mean by abstract grammar and abstract syntax here?
+
+If you got confused about initial-algebra stuff, just think that our abstract syntax is the set of all finite derivation or parse trees.
+
+If not, you can view the abstract syntax as the initial algebra of the signature induced by the grammar.
+
 Signature
 \begin{align*}
     S_{PL} = (&t^{\swarrow \text{integer exps}}, u^{\swarrow \text{assertions}}), 0:t, 1:t, \ldots, \\
@@ -258,7 +303,8 @@ An algebra homomorhpism from $A_0$ to $A_1$ is a pair $(h:\mu^0\rightarrow \mu^1
     k(=^0 (a, b)) = =^1 (h(a), h(b)) \text{ for all }a, b\in \mu^0 \\
     \text{for any }x\in \nonterminal{var}, a\in \mu^0, k(\forall^0 (x, a)) = \forall^1 (x, k(a))
 \end{align*}
-As before, the abstract syntax is \underline{the initial algebra of th signature $S_{PL}$} \footnote{Isomorphic to the algebra built with derivation trees}. Because of initiality, we can define a function on assertions in a syntax-directed way. Also, we can use structural induction to prove properties about assertions. \\
+As before, the abstract syntax is \underline{the initial algebra of th signature $S_{PL}$} \footnote{Isomorphic to the algebra built with derivation trees}. because of initiality, we can define a function on assertions in a syntax-directed way. Also, we can use structural induction to prove properties about assertions.
+
 \section{Denotational Semantics}
 1. We define two functions :
 \begin{align*}
@@ -266,7 +312,8 @@ As before, the abstract syntax is \underline{the initial algebra of th signature
     \interp{ - }_{assert}\footnotemark \in [\nonterminal{assert} \rightarrow \Sigma \rightarrow \underbrace{\mathbb{B}}_{\{tt, ff\}}]
 \end{align*}
 \footnotetext{We will omit subscripts most of the time.}
-2. The definition of $\interp{ - }_{intexp}$ is the same as before. Recall that it is syntax-directed. \\
+2. The definition of $\interp{ - }_{intexp}$ is the same as before. Recall that it is syntax-directed.
+
 3. The definition of $\interp{ - }_{assert}$ is as follows:
 \begin{align*}
     &\interp{ true } \sigma = tt &\interp{ false } \sigma = ff \\
@@ -275,12 +322,15 @@ As before, the abstract syntax is \underline{the initial algebra of th signature
     &\interp{ p_1 \wedge p_2 } \sigma = (\interp{ p_1 } \sigma \wedge \interp{ p_2 } \sigma) \\
     &\interp{ \forall x. p } \sigma = (\forall n \in \mathbb{Z}. \interp{ p } [\sigma|x:n])
 \end{align*}
-4. Don't forget that what appears inside $\interp{ - }$ is a tree, while $\forall$ and $\wedge$ etc on the RHS of = are the usual mathematical notations. \\
+4. Don't forget that what appears inside $\interp{ - }$ is a tree, while $\forall$ and $\wedge$ etc on the RHS of = are the usual mathematical notations.
+
 5. As we discussed already, here we are really defining an algebra $A$ of $S_{PL}$ s.t. \[A=(\Sigma \rightarrow \mathbb{Z}, \Sigma \rightarrow \mathbb{B}, \ldots)\]
 Then, we are using the initiality of the abstract syntax to get a map from it to A.
 \section{Inference Rules}
-1. Rules for deriving always-true (In other words, \underline{valid}\footnote{p is \underline{valid} if $\interp{ p } \sigma = tt$ for all $\sigma \in \Sigma$}) assertions. \\
-2. Expressed using the inference-rule notation. \\
+1. Rules for deriving always-true (In other words, \underline{valid}\footnote{p is \underline{valid} if $\interp{ p } \sigma = tt$ for all $\sigma \in \Sigma$}) assertions.
+
+2. Expressed using the inference-rule notation.
+
 \begin{figure*}
     \centering
     \begin{subfigure}[b]{0.475\textwidth}
@@ -323,8 +373,10 @@ Then, we are using the initiality of the abstract syntax to get a map from it to
     \item expressions that if all of $p_0, \ldots, p_n$ are valid, then p is valid.
     \item \underline{doesn't} say that for all $\sigma \in \Sigma$, if $\interp{ p_0 } \sigma = \ldots = \interp{ p_n } \sigma = tt$ then $\interp{ p } \sigma = tt$.
 \end{itemize}
-Exercise : Prove why the above three rules are \underline{correct}\footnote{also called sound} \\
-3. A big part of research on or study about predicate logic is to study these rules. \\
+Exercise : Prove why the above three rules are \underline{correct}\footnote{also called sound}
+
+3. A big part of research on or study about predicate logic is to study these rules.
+
 In this course, however, we will not do this.
 \section{Binding and substitution}
 1. $\forall v, \exists v$
@@ -333,9 +385,12 @@ In this course, however, we will not do this.
     \item They have the scope of binding.
     \item Informally, they \underline{introduce a new variable, give a name v to it, and make it available within its scope}\footnote{binding, which happens frequently in a programming language.}. Morally, renaming v to w should not change the meaning of the assertion.
 \end{itemize}
-2. An occurence of a variable x is bounded in p if x is within the scope of a binder for x in p.\\
-3. An occurence of x is free in p if it is not bound in p. \\
-4. A variable x is free in p if it has a free occurence in p. \\
+2. An occurence of a variable x is bounded in p if x is within the scope of a binder for x in p.
+
+3. An occurence of x is free in p if it is not bound in p.
+
+4. A variable x is free in p if it has a free occurence in p.
+
 5. We can define functions $FV_{assert}$ and $FV_{intexp}$ that compute the set of free variables of assertions and integer expressions in a syntax-directed way.
 \begin{align*}
     &FV_{intexp} : \text{ defined as before} \\
@@ -345,9 +400,12 @@ In this course, however, we will not do this.
     &FV_{assert}(p_1 \wedge p_2) = FV_{assert}(p_1) \cup FV_{assert}{p_2} \\
     &FV_{assert}(\forall v. p) = FV_{assert}(p) \setminus \{v\}
 \end{align*}
-Exercise. Define an algebra for $S_{PL}$ such that the algebra homomorphism for the abstract syntax to this algebra is $(FV_{intexp}, FV_{assert})$ \\
-6. Now, how should we deal with binders during substitution? It is not entirely obvious. Several textbooks had wrong definitions in old days. \\
-Mistakes : $(\sfrac{(\forall y. y > x)}{x\mapsto y+1})=(\forall y.y>y+1)$ \\
+Exercise. Define an algebra for $S_{PL}$ such that the algebra homomorphism for the abstract syntax to this algebra is $(FV_{intexp}, FV_{assert})$
+
+6. Now, how should we deal with binders during substitution? It is not entirely obvious. Several textbooks had wrong definitions in old days.
+
+Mistakes : $(\sfrac{(\forall y. y > x)}{x\mapsto y+1})=(\forall y.y>y+1)$
+
 Correct definition
 \begin{align*}
     &\sfrac{true}{\delta} = true & \sfrac{false}{\delta} = false \\
@@ -364,7 +422,8 @@ If v is not in the set, then $v_{new}=v$. Otherwise, $v_{new}$ is the first vari
     $\interp{ p } \delta = \interp{ p } \delta'$
 \end{proposition}
 \begin{proof}
-    By structural induction. \\
+    By structural induction.
+
     We can use it because the abstract syntax for predicate logic is an initial algebra.
     \begin{itemize}
         \item true or false :  obvious
@@ -384,7 +443,8 @@ If v is not in the set, then $v_{new}=v$. Otherwise, $v_{new}$ is the first vari
         \[\sigma_1 := [\sigma|x:n]\text{ and }\sigma_1'=[\sigma'|x:n]\]
         Then, $\forall \omega \in FV(p')$
         \[\sigma_1(\omega)=\sigma_1'(\omega)\]
-        By induction hypothesis, $\interp{ p' } \sigma_1 = \interp{ p' } \sigma_1'$ \\
+        By induction hypothesis, $\interp{ p' } \sigma_1 = \interp{ p' } \sigma_1'$
+
         \begin{align*}
             \interp{ \forall x. p' } \sigma &= (\forall n \in \mathbb{Z}. \interp{ p' } [\sigma|x:n]) \\
             &=\forall n \in \mathbb{Z}, \interp{ p' } [\sigma' | x:n] = \interp{ \forall x. p' } \sigma'
