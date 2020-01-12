@@ -1,0 +1,335 @@
+\documentclass{report}[12pt]
+
+\usepackage{mathtools,enumitem,amssymb,amsmath,kotex,amsfonts,listings,stmaryrd,amsthm}
+\usepackage{xfrac,txfonts}
+\usepackage{graphicx}
+\usepackage{mathrsfs}
+\usepackage{subcaption}
+\usepackage{ebproof}
+\usepackage{tikz}
+
+\usetikzlibrary{trees}
+\usetikzlibrary{cd}
+\begin{document}
+
+\setlength\parindent{0pt}
+
+\newtheoremstyle{break}
+  {\topsep}{\topsep}%
+  {\itshape}{}%
+  {\bfseries}{}%
+  {\newline}{}%
+
+\theoremstyle{break}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\newtheorem{lemma}{Lemma}
+\newtheorem{example}{Example}
+\newcommand{\nonterminal}[1]{\langle \text{#1}\rangle}
+\newcommand{\rem}[0]{\text{ rem }}
+\newcommand{\interp}[1]{\llbracket #1 \rrbracket}
+\newcommand{\bbot}[0]{\Perp}
+\newcommand{\TODO}[1]{TODO : #1}
+
+\setcounter{chapter}{4}
+
+\title{CS520 Lecture 4\\Program specifications and Their Proofs}
+\maketitle
+
+\section{Motivation}
+1. Are there any methods that let us specify desired properties or intended behaviours of a program and prove that the specified properties indeed hold? For instance, consider the program
+\[C_{div3} \equiv a:=0; b:=x; \text{while }(b \ge 3) \text{ do }b:=b-3;a:=a+1\]
+We want to express formally that the program divides x by 3, and stores the quotient in a and the remainder in b. We also want to prove this formal specification.
+
+2. We will study Hoare logic and its variant for total correctness. They provide the kind of methods that we are looking for.
+
+3. Hoare logic and its total-correctness variant are the basis of modern automatic software verifiers, such as Facebook's infer.
+
+4. Another reason for studying Hoare logic is that it shows why we need or where we use denotational semantics that we studied.
+
+\section{Syntax and Semantics for specifications}
+1. Specifications are a new type of phrases that formally express properties of programs.
+
+2. Syntax in terms of abstract grammar:
+\begin{align*}
+    \nonterminal{spec} ::= &\{\nonterminal{assert}\} \nonterminal{comm} \{\nonterminal{assert}\} \\
+    | &[\nonterminal{assert}] \nonterminal{comm} [\nonterminal{assert}]
+\end{align*}
+Examples :
+\[c_{fib} \equiv \begin{matrix}
+    k:=1;y:=0;x:=1;\\\text{while }(k\neq n) \text{ do }t:=y;y:=x;x:=x+t;k:=k+1
+\end{matrix}\]
+\begin{align*}
+    \{n \ge 0\} c_{fib} \{x=fib(n)\} & \{true\} c_{fib} \{x=fib(n)\} \\
+    [n \ge 0] c_{fib} [x=fib(n)] & [true] c_{fib} [x=fib(n)]
+\end{align*}
+\begin{align*}
+    \{x \ge 0\} c_{div3} \{x=3\times a + b \wedge 0\le b < 3 \wedge a \ge 0\} \\
+    [x \ge 0] c_{div3} [x=3\times a + b \wedge 0\le b < 3 \wedge a \ge 0] \\
+    \{true\} c_{div3} \{x=3\times a + b \wedge 0\le b < 3 \wedge a \ge 0\} \\
+    [true] c_{div3} [x=3\times a + b \wedge 0\le b < 3 \wedge a \ge 0]
+\end{align*}
+3. Intuitive reading :
+
+$\{p\}c\{q\}$ holds iff when c is run in a state satisfying p \underline{and it terminates normally}\footnote{condition}, then the final state satisfies q.
+
+$[p]c[q]$ holds iff when c is run in a state satisfying p, then \underline{it terminates normally}\footnote{conclusion} and the final state satisfies q.
+
+Note that $[p]c[q]$ expresses a stronger property than $\{p\}c\{q\}$. The former is called \underline{total correctness specification}\footnote{also total correctness triple} and the latter \underline{partial correctness specification}\footnote{also partial correctness triple or Hoare triple or triple}.
+
+\begin{align*}
+    p \cdots \text{precondition or precedent}\\
+    q \cdots \text{postcondition or consequent}
+\end{align*}
+
+Exercise. Among all the partial correctness and total correctness specification from above, pick those that hold.
+
+4. Formal semantics:
+
+\[\interp{-}_{spec}\in [\nonterminal{spec} \rightarrow \mathbb{B}]\]
+
+\[\interp{\{p\}c\{q\}} = tt \text{ iff }\forall \sigma \interp{p}\sigma = tt \wedge \interp{c}\sigma \neq \bot \Rightarrow \interp{q}(\interp{c}\sigma)=tt\]
+
+\[\interp{[p]c[q]} = tt \text{ iff }\forall \sigma \interp{p}\sigma = tt \Rightarrow \interp{c}\sigma \neq \bot \wedge \interp{q}(\interp{c}\sigma)=tt\]
+
+\section{Inference Rules}
+1. Methods or rules for proving or deriving partial or total correctness triples.
+
+2. Have the inference rule form :
+
+\begin{prooftree}
+    \hypo{premises}
+    \infer1{conclusion}
+\end{prooftree}
+\begin{prooftree}
+    \hypo{\phi_1}
+    \hypo{\phi_2}
+    \hypo{\ldots}
+    \hypo{\phi_n}
+    \infer4{\psi}
+\end{prooftree}
+
+(If $\phi_1, \ldots, \phi_n$ are all true, then $\psi$ is true.)
+
+3. Rules associated with program constructs:
+
+{\center
+\begin{prooftree}
+    \infer0{\{p\}skip\{p\}}
+\end{prooftree}
+\begin{prooftree}
+    \infer0{[p]skip[p]}
+\end{prooftree}
+
+\vspace{1cm}
+
+\begin{prooftree}
+    \hypo{\{p\}c_1 \{r\}}
+    \hypo{\{r\}c_2 \{q\}}
+    \infer2{\{p\}c_1;c_2 \{q\}}
+\end{prooftree}
+\begin{prooftree}
+    \hypo{[p]]c_1 [r]}
+    \hypo{[r]]c_2 [q]}
+    \infer2{[p]c_1;c_2 [q]}
+\end{prooftree}
+
+\vspace{1cm}
+
+\begin{prooftree}
+    \hypo{\{p \wedge b\} c_1 \{q\}}
+    \hypo{\{p\wedge \neg b\} c_2 \{q\}}
+    \infer2{\{p\} \text{if }b \text{ then }c_1 \text{ else }c_2 \{q\}}
+\end{prooftree}
+\begin{prooftree}
+    \hypo{[p \wedge b] c_1 [q]}
+    \hypo{[p\wedge \neg b] c_2 [q]]}
+    \infer2{[p]] \text{if }b \text{ then }c_1 \text{ else }c_2 [q]]}
+\end{prooftree}
+
+\vspace{1cm}
+
+\begin{prooftree}
+    \infer0{\{\sfrac{q}{x\rightarrow e}\}x:=e \{q\}}
+\end{prooftree}
+\begin{prooftree}
+    \infer0{[\sfrac{q}{x\rightarrow e}]x:=e [q]}
+\end{prooftree}
+
+\vspace{1cm}
+
+\begin{prooftree}
+    \hypo{\{i \wedge b\} c \{i\}}
+    \infer1{\{i\}\text{while }b \text{ do }c \{i \wedge \neg b\}}
+\end{prooftree}
+
+\begin{prooftree}
+    \hypo{i \wedge b \Rightarrow e \ge 0}
+    \hypo{[i \wedge b \wedge e=v_0] c [i \wedge c < v_0]}
+    \infer2{[i]\text{while }b \text{ do }c [i \wedge \neg b]}
+\end{prooftree}\par
+}
+
+(1) Note that rules for total correctness and the corresponding ones for partial correctness are identical except for the case of loop. This is expected because these two notions differ only in their treatment of non-termination.
+
+(2) The rules for while require that i should be preserved by the body of the loop. The one for total correctness additionally requires that the value of e should decrease whenever we run the loop body c once, but it cannot be negative. All these requirements together give the conclusions of the rules.
+
+(3) The rules for assignment also deserve some thoughts. They in a sense say that running an assignment backward symbolically is the same as doing substitution. It holds because of the substitution theorem (Prop 1.3, Prop 1.4 in the textbook).
+
+Reminder of the theorem : specialised to our case here
+{\centering
+\begin{tikzcd}
+    \Sigma \arrow[rr, "\lambda \sigma.{[ \sigma|x:\llbracket e \rrbracket \sigma ]}"] \arrow[d, "\llbracket \sfrac{q}{x\rightarrow e}\rrbracket "] & & \Sigma \arrow[d,"\llbracket q\rrbracket"] \\
+    \mathbb{B} &= & \mathbb{B}
+\end{tikzcd}
+}
+4. Rules not associated with any specific program constructs (sometimes called structural rules or adaption rules)
+
+\vspace{1cm}
+
+{\centering
+\begin{prooftree}
+    \hypo{p\Rightarrow p'}
+    \hypo{\{p'\}c \{q'\}}
+    \hypo{q' \Rightarrow q}
+    \infer3{\{p\}c\{q\}}
+\end{prooftree}
+\begin{prooftree}
+    \hypo{p\Rightarrow p'}
+    \hypo{[p']c [q']}
+    \hypo{q' \Rightarrow q}
+    \infer3{[p]c[q]}
+\end{prooftree}\par
+}
+
+\vspace{1cm}
+
+They are called \underline{the rule of consequence}. They often enable us to use the other rules, in particular, those for loop and if.
+
+5. I omit many structural rules and the rules for newvar. Look at the textbook if you are interested.
+
+\section{Example Proof}
+{\centering \small
+\[\{x\ge 0\} c_{div3} \{x=3\times a + b \wedge 0 \le b < 3\}\]
+\[q_1:= x=3\times a + b, q_2 := 0 \le b < 3\]
+
+\vspace{1cm}
+
+\begin{prooftree}
+    \hypo{\{x \ge 0\} a:=0;b:=x \{q_1 \wedge b \ge 0\}}
+    \hypo{\{q_1 \wedge b \ge 0\} \text{while }\ldots\{q_1\}}
+    \infer2{\{x\ge 0\} c_{div3} \{q_1 \wedge q_2\}}
+\end{prooftree}
+
+\vspace{1cm}
+
+\scriptsize
+\begin{prooftree}
+    \hypo{x\ge 0 \Rightarrow x=x \wedge x \ge 0}
+    \infer0{\{x=x \wedge x \ge 0\} a:=0 \{x=3a + x \wedge x \ge 0\}}
+    \infer2{\{x \ge 0\} a:=0 \{x=3a + x \wedge x \ge 0\}}
+    \infer0{\{x=3a + x \wedge x \ge 0\}b:=x \{q_1 \wedge b\ge 0\}}
+    \infer2{\{x \ge 0\} a:=0;b:=x \{q_1 \wedge b \ge 0\}}
+\end{prooftree}
+
+\vspace{1cm}
+
+\normalsize
+\begin{prooftree}
+    \infer0{\substack{\{q_1 \wedge b \ge 0 \wedge b \ge 3\}\\b:=b-3 \\ \{x=3(a+1)+b \wedge b \ge 0\}}}
+    \infer0{\substack{\{x=3(a+1)+b \wedge b \ge 0\}\\a:=a+1\\\{q_1 \wedge b \ge 0\}}}
+    \infer2{\substack{\{q_1 \wedge b \ge 0 \wedge b \ge 3\} \\ b:=b-3;a:=a+1 \\\{q_1 \wedge b \ge 0\}}}
+    \infer1{\substack{\{q_1 \wedge b \ge 0\} \\ \text{while }(b \ge 3)\text{ do }b:=b-3;a:=a+1 \\ \{q_1 \wedge q_2\}}}
+\end{prooftree}\par
+}
+
+1. In practice, people use the rule of consequence without mentioning it explicitly. Also, they use many derived rules.
+
+2. This proof has the flavour of running a program backward symbolically because of its heavy use of the assignment rule and the fact that the rule of consequence is used only when it is necessary.
+
+Exercise 1. Prove
+\[\{n \ge 1\}C_{fib}\{x=fib(n)\}\]
+\[\{a \ge 1 \wedge b \ge 1 \wedge a = a_0 \wedge b = b_0\}Euclid \{a=gcd(a_0, b_0)\}\]
+where $Euclid \equiv \text{while }(b\neq a)\text{ do }\text{if }a > b \text{ then }a:=a-b \text{ else }b:=b-1$
+
+Exercise 2. Find a forward rule for assignment. That is, for all p and x, e find q s.t.
+\begin{prooftree}
+    \infer0{\{p\}x:=e \{q\}}
+\end{prooftree}
+
+\section{Soundness}
+\begin{theorem}[Soundness Theorem]
+    If $\{p\}c\{q\}$ is derivable using \underline{the rules that we studied}\footnote{called rules in Hoare logic}, then $\interp{\{p\}c\{q\}}=tt$, i.e. the triple $\{p\}c\{q\}$ holds.
+
+    If $[p]c[q]$ is derivable, then $\interp{[p]c[q]}=tt$.
+\end{theorem}
+Intuitively, the theorem says that all rules are correct. In fact, typical proofs of the theorem show the correctness of the rules in the following sense:
+
+If \begin{prooftree}
+    \hypo{\phi_1}
+    \hypo{\ldots}
+    \hypo{\phi_n}
+    \infer3{\psi}
+\end{prooftree}
+then $\interp{\phi_1}=tt \wedge \ldots \wedge \interp{\phi_n} = tt\Rightarrow \interp{\psi} = tt$
+
+Tue rules for loop( or while) are the most important cases. We will consider only the one for partial correctness.
+
+\begin{prooftree}
+    \hypo{\{i \wedge b\} c \{i\}}
+    \infer1{\{i\}\text{while }b \text{ do }c \{i \wedge \neg b\}}
+\end{prooftree}
+
+We first do a bit of recoriting for the semantics of specifications.
+
+\[\interp{\{p\}c \{q\}} \text{ iff }\forall \sigma \in \Sigma. \interp{p}\sigma = tt \Rightarrow \interp{q}_\bot (\interp{c}\sigma)\sqsubseteq tt\]
+
+where $\interp{q}_\bot \in [\Sigma_\bot \rightarrow \mathbb{B}_\bot]$ s.t. $\interp{q}_\bot \sigma = \interp{q}\sigma \text{for all }\sigma \in \Sigma \text{ and }\interp{q}_\bot (\bot)=\bot$.
+
+We need to prove that if
+\[\forall \sigma. \interp{i \wedge b}\sigma = tt \Rightarrow \interp{i}_\bot (\interp{c}\sigma) \sqsubseteq tt \tag{$\ast$}\]
+then
+\[\forall \sigma \interp{i}\sigma = tt \Rightarrow \interp{i\wedge \neg b} (\interp{\text{while }b\text{ do }c}\sigma) \sqsubseteq tt\]
+Assume $(\ast)$.
+
+Let
+\begin{align*}
+    &F \in [(\Sigma \rightarrow \Sigma_\bot) \rightarrow_c (\Sigma \rightarrow \Sigma_\bot)] \\
+    &F(f)(b) = \text{if }\interp{b}\sigma = tt \text{ then }(f_\bbot \circ \interp{c})(\sigma) \text{ else }\sigma
+\end{align*}
+Define $f_n = F^n(\bot)$ for $n \ge 0$.
+
+Then, $\interp{\text{while }b\text{ do }c} = \sqcup_{n=0}^\infty f_n$.
+
+We will show that for all $n \ge 0$,
+\[\forall \sigma \interp{i}\sigma = tt \Rightarrow \interp{i \wedge \neg b}_\bot (f_n (\sigma))\sqsubseteq tt \tag{$\ast \ast$}\]
+This is sufficient because for all $\sigma \in \Sigma$ s.t. $\interp{i}\sigma = tt$,
+\begin{align*}
+    &\interp{i \wedge \neg b}_\bot (\interp{\text{while }b\text{ do }c}) \\
+    &= \interp{i \wedge \neg b}_\bot ((\sqcup_{n=0}^\infty f_n)\sigma) \\
+    &= \interp{i \wedge \neg b}_\bot (\sqcup_{n=0}^\infty f_n(\sigma)) \\
+    &= \sqcup_{n=0}^\infty (\interp{i \wedge \neg b}_\bot (f_n(\sigma))) & (\text{because }\interp{i \wedge \neg b}_\bot \text{ is continuous}) \\
+    &\sqsubseteq tt & (\text{because of }(\ast \ast))
+\end{align*}
+Our proof of $(\ast \ast)$ uses induction on n.
+
+Base case $n = 0$: $f_0 = \bot$, $\therefore \interp{i \wedge \neg b}_\bot (\bot(\sigma) = \interp{i \wedge \neg b}_\bot(\bot) = \bot$.
+
+Inductive case $n = m + 1$ :
+\begin{align*}
+    &\text{Pick }\sigma \text{ s.t. } \interp{i}\sigma = tt. \\
+    &\interp{i \wedge \neg b}_\bot (f_n(\sigma)) = \interp{i \wedge \neg b}_\bot (f_{m+1} (\sigma)) = \interp{i \wedge \neg b}_\bot (F(f_n)(\sigma)) \\
+    &= \interp{i \wedge \neg b}_\bot (\text{if }\interp{b}\sigma = tt \text{ then }({f_m}_\bbot \circ \interp{c})(\sigma) \text{ else }\sigma) \\
+    &= \text{if }\interp{b}\sigma = tt \text{ then }(\interp{i \wedge \neg b}_\bot \circ {f_m}_\bbot)(\interp{c}\sigma) \text{ else }\interp{i \wedge \neg b}_\bot\sigma
+\end{align*}
+Since $\interp{i}\sigma = tt$, if $\interp{b}\sigma \neq tt$, then $\interp{i \wedge \neg b}_\bot\sigma = tt \sqsubseteq tt$.
+
+If $\interp{b} \sigma = tt$ and $\interp{c}\sigma = \bot$, then $(\interp{i \wedge \neg b}_\bot \circ {f_m}_\bbot)(\interp{c}\sigma)=\bot \sqsubseteq tt$.
+
+If $\interp{b}\sigma = tt$ and $\interp{c}\sigma \neq \bot$, then $\interp{i}(\interp{c}\sigma) = tt$ by $(\ast)$.
+
+Thus, $(\interp{i \wedge \neg b}_\bot \circ {f_m}_\bbot)(\interp{c}\sigma) = \interp{i \wedge \neg b}_\bot (f_m (\interp{c}\sigma)) \sqsubseteq tt$ by induction hypothesis.
+\end{document}
