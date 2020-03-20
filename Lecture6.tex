@@ -1,0 +1,321 @@
+\documentclass{report}[12pt]
+
+\usepackage{mathtools,enumitem,amssymb,amsmath,kotex,amsfonts,listings,stmaryrd,amsthm}
+\usepackage{xfrac,txfonts}
+\usepackage{graphicx}
+\usepackage{mathrsfs}
+\usepackage{subcaption}
+\usepackage{ebproof}
+\usepackage{tikz}
+
+\usetikzlibrary{trees}
+\usetikzlibrary{cd}
+\begin{document}
+
+\setlength\parindent{0pt}
+
+\newtheoremstyle{break}
+  {\topsep}{\topsep}%
+  {\itshape}{}%
+  {\bfseries}{}%
+  {\newline}{}%
+
+\theoremstyle{break}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\newtheorem{lemma}{Lemma}
+\newtheorem{example}{Example}
+\newcommand{\nonterminal}[1]{\langle \text{#1}\rangle}
+\newcommand{\rem}[0]{\text{ rem }}
+\newcommand{\interp}[1]{\llbracket #1 \rrbracket}
+\newcommand{\bbot}[0]{\Perp}
+\newcommand{\TODO}[1]{TODO : #1}
+
+\setcounter{chapter}{6}
+
+\title{CS520 Lecture 6\\Transition Semantics}
+\maketitle
+\section{Motivation or objective}
+1. So far we defined the meanings of programs in imperative languages using the denotational semantics. A good denotational semantics reveals an underlying mathematical structure of a programming language and hides the intermediate stepf of computation as much as possible. Also, it is compositional, and lets us reason about a piece of program code even when we do not know its surrounding program context.
+
+2. However, when a programming language has advanced or complex language contructs, defining a denotational semantics of the language may be difficult. Also, sometimes we want to have a mathematical semantics of programs that tells us what happens in the middle of computation.
+
+3. The operational semantics is an alternative approach to give a mathematical meanings to programs. It is non-compositional, and does not hide the intermediate step of computation. But it is usually very simple and also rigorous or formal enough to enable a mathematical study of a programming language and language tools such as compiler and program verifier. Also, an operational semantics of a programming language often serves as a blue print of an interpreter or a compiler of the language.
+
+4. In this chapter, we will study so called \underline{small-step} operational semantics, which Reynolds calls transition semantics.
+
+\section{Main idea of the small-step operational semantics}
+1. The key idea is to formalise one computation step of a program using a relation, called transition relation.
+
+2. Typically, a small-step operational semantics has two main parts.
+
+\begin{enumerate}
+  \item $\Gamma \cdots$ a set of configurations. \\
+  Usually, $\Gamma = \Gamma_N \cup \Gamma_T$ for some $\Gamma_N, \Gamma_T$ with $\Gamma_N \cap \Gamma_T = \o$. \\
+  Each element $\gamma \in \Gamma$ describes the status of a machine that runs a program. If $\gamma \in \Gamma_N$, it is called \underline{nonterminal configuration} and its program is not finished yet. If $\gamma \in \Gamma_T$, it is called \underline{terminal configuration} and the program of its program is completed.
+  \item $\rightarrow \subseteq \Gamma_N \times \Gamma \cdots$ transition relation. \\
+  Intuitively, $(\gamma, \gamma') \in \rightarrow$ (typically written as $\gamma \rightarrow \gamma'$) means that one computation step changes the status of a machine from $\gamma$ to $\gamma'$. Note that $\gamma$ has to be a nonterminal configuration, because of $\Gamma_N$. \\
+  This condition is consistent with the intuition behind nonterminal and terminal configurations.
+\end{enumerate}
+3. Defining a small-step operational semantics amounts to defining $\Gamma, \Gamma_N, \Gamma_T$ and $\rightarrow$. We will see a few examples of the operatinal semantics in this lecture. Often if we define $\Gamma, \Gamma_N, \Gamma_T$, then the definition of $\rightarrow$ follows almost automatically. This is a bit similar to the situation in the denotational semantics that if the form of the interpretation function for commands $\interp{-}$ is determined, the actual definition of the function follows almost automatically.
+
+4. When defining the $\rightarrow$ relation, we usually use the inference rule notation {\small \begin{prooftree}
+  \hypo{\psi_1} \hypo{\ldots} \hypo{\psi_n}
+  \infer3{\psi}
+\end{prooftree}} that you saw when we discussed Hoare logic.
+
+\section{Small-step operational semantics of the simple imperative language}
+1. Let's try to give the operational semantics to the simple imperative language that we studied. Here is a reminder of its abstract grammar:
+\begin{align*}
+  \nonterminal{comm} &::= \text{skip }| \nonterminal{var} := \nonterminal{intexp}
+  | \nonterminal{comm}; \nonterminal{comm} \\
+  & | \text{if } \nonterminal{boolexp} \text{ then }\nonterminal{comm} \text{ else }\nonterminal{comm} \\
+  & | \text{while }\nonterminal{boolexp} \text{ do } \nonterminal{comm}
+\end{align*}
+2. What should we do? First, we have to define the set of nonterminal configurations and that of terminal configurations. Here are our definitions.
+\[\Gamma_N \stackrel{def}{=}\nonterminal{comm}
+\footnote{command that records the ramaining computation}
+\times \Sigma\footnote{the current state of a machine}\footnote{the set of states, i.e. $[\nonterminal{var}\rightarrow \mathbb{Z}]$} \hspace{2cm}
+\Gamma_T \stackrel{def}{=} \Sigma\footnote{The $\langle$comm$\rangle$ is missing because there is no remaining computation}\]
+The set of configurations is the union of the above two sets.
+
+3. Second, we should define a binary relation
+\[\rightarrow \subseteq \Gamma_N \times \Gamma\]
+called transition relation, that describes single-step computation. We write $\gamma \rightarrow \gamma'$ to mean $(\gamma, \gamma') \in \rightarrow$. We define the transition relation $\rightarrow$ using the inference rule notation.
+
+{\center
+\begin{prooftree}
+  \infer0{\langle skip, \sigma \rangle \rightarrow \sigma}
+\end{prooftree}
+
+\vspace{1cm}
+
+\begin{prooftree}
+  \infer0{\langle v:=e, \sigma \rangle \rightarrow [\sigma|v:\interp{e}\sigma]}
+\end{prooftree}
+
+\vspace{1cm}
+
+\begin{prooftree}
+  \hypo{\langle c_1, \sigma \rangle \rightarrow \sigma'}
+  \infer1{\langle c_1; c_2, \sigma \rangle \rightarrow \langle c_2, \sigma' \rangle}
+\end{prooftree}
+
+\vspace{1cm}
+
+\begin{prooftree}
+  \hypo{\langle c_1, \sigma \rangle \rightarrow \langle c_1', \sigma' \rangle}
+  \infer1{\langle c_1; c_2, \sigma\rangle \rightarrow \langle c_1'; c_2, \sigma'}
+\end{prooftree}\label{nonsub1}
+
+\vspace{1cm}
+
+\begin{prooftree}
+  \infer0[($\interp{b}\sigma = tt$)]{\langle \text{if }b \text{ then }c_1 \text{ else }c_2, \sigma \rangle \rightarrow \langle c_1, \sigma \rangle}
+\end{prooftree}
+
+\vspace{1cm}
+
+\begin{prooftree}
+  \infer0[($\interp{b}\sigma = ff$)]{\langle \text{if }b \text{ then }c_1 \text{ else }c_2, \sigma \rangle \rightarrow \langle c_2, \sigma \rangle}
+\end{prooftree}
+
+\vspace{1cm}
+
+\begin{prooftree}
+  \infer0[($\interp{b}\sigma = ff$)]{\langle \text{while }b \text{ do }c, \sigma \rangle \rightarrow \sigma}
+\end{prooftree}
+
+\vspace{1cm}
+
+\begin{prooftree}
+  \infer0[($\interp{b}\sigma = tt$)]{\langle \text{while }b \text{ do }c, \sigma \rangle \rightarrow \langle c; \text{while }b \text{ do }c, \sigma \rangle}
+\end{prooftree}\label{nonsub2}\par
+}
+\vspace{1cm}
+
+Note that the right-hand side of $\rightarrow$ may include a command that is not a sub-command of the one on the left-hand side. Look at \cite{nonsub1} and \cite{nonsub2}. This indicates that the semantics is not compositional. All these rules correspond to our intuitive understandinf of one computation step. They can form the basis of the implementation of a simple interpreter, which just needs to run the $\rightarrow$ step repeatedly.
+
+4. Formal properties of the operational semantics.
+\begin{enumerate}
+  \item $\gamma \rightarrow \gamma_1 \text{ and }\gamma \rightarrow \gamma_2 \Rightarrow \gamma_1 = \gamma_2$ \\
+  The semantics is deterministic.
+  \item $\forall \gamma \in \Gamma_N. \exists \gamma' \text{ s.t. }\gamma \rightarrow \gamma'$ \\
+  In this semantics, executions never get stuck.
+  \item From 1. and 2. it follows that for every $\gamma \in \Gamma$, there exists a unique maximal sequence.\\
+  \[\gamma_0, \gamma_1, \ldots, \gamma_n\footnote{may be infinite}\]
+  such that
+  \[\gamma = \gamma_0 \wedge  \gamma_0 \rightarrow \gamma_1 \rightarrow \ldots \rightarrow \gamma_n \wedge (\gamma_n \in \Gamma_T \text{ or }n\text{ is infinite})\]
+  This maximal finite or infinite sequence represents the full computation starting from $\gamma$.
+  \item We write $\gamma \uparrow$ if the maximal execution sequence from $\gamma$ is infinite. Then, for all commands $c$ and states $\sigma$,
+  \[\interp{c}\sigma = \bot \text{ iff }\langle c, \sigma \rangle \uparrow\]
+  \[\interp{c}\sigma = \sigma' \text{ iff }\langle c, \sigma \rangle \rightarrow^* \sigma' \footnote{reflexive and transitive closure of $\rightarrow$. i.e., $\rightarrow^* \stackrel{def}{=}\cup_{n=0}^{\infty}(\rightarrow)^n$}\]
+\end{enumerate}
+\underline{exercise} Prove 1, 2, and 4.
+
+\underline{exercise} Explain why the reasoning in 3 is true.
+\section{Extension with newvar}
+1. Extended the language with variable declaration:
+\[\nonterminal{comm} ::= \ldots | \text{ newvar }\nonterminal{var}:=\nonterminal{intexp}\text{ in }\nonterminal{comm}\]
+2. How should we modify the $\rightarrow$ relation? Add a rule for newvar.
+
+1) Option 1.{\center
+\begin{prooftree}
+  \infer0[where $n = \sigma(v)$]{\langle \text{newvar }v:=e \text{ in }c, \sigma \rangle \rightarrow \langle c;v:=n, [\sigma|v:\interp{e}\sigma] \rangle}
+\end{prooftree}\vspace{0.5cm}\par}
+2) Option 2. {\center
+\begin{prooftree}
+  \hypo{\langle c, [\sigma|v:\interp{e}\sigma] \rangle \rightarrow \sigma'}
+  \infer1{\langle \text{newvar }v:=e \text{ in }c, \sigma \rangle \rightarrow [\sigma' | v:\sigma(v)]}
+\end{prooftree}\vspace{0.5cm}\par
+}
+3) Both options are acceptable. But 2) is better. Only 2) works when we extend the language with primitives for concurrent executions.
+
+3. Note that we did not change $\Gamma_N, \Gamma_T$. Thus, adding newvar doesn't change the operational semantics much. In a sense, this small change means that newvar doesn't change the language much, either.
+
+\section{Adding fail}
+\[\nonterminal{comm} ::= \ldots | fail\]
+1. When we add fail, we have to change the set $\Gamma_T$ of terminal configuration, because we now have two types of terminations, normal one and abnormal one.
+\[\Gamma_T \stackrel{def}{=} \hat \Sigma = \Sigma \cup \{abort\} \times \Sigma (\text{or }= \Sigma + \Sigma)\]
+$\Gamma_N$ remains unchanged.
+
+2. Since $\Gamma_T$ and so $\Gamma$ are changed, we should change the definition of $\rightarrow$. We will also have to add a rule for fail. Here is the new set of rules.
+{\center
+\begin{prooftree}
+  \infer0{\langle fail, \sigma \rangle \rightarrow \underbrace{\langle abort, \sigma\rangle}_{terminal configuration}}
+\end{prooftree}
+
+\vspace{1cm}
+
+\begin{prooftree}
+  \infer0{\langle skip, \sigma \rangle \rightarrow \sigma}
+\end{prooftree}
+\begin{prooftree}
+  \infer0{\langle v:=e, \sigma \rangle \rightarrow [\sigma|v:\interp{e}\sigma]}
+\end{prooftree}
+
+\vspace{1cm}
+
+\begin{prooftree}
+  \infer0[$\interp{b}\sigma = tt$]{\langle \text{if }b \text{ then }c_1 \text{ else }c_2, \sigma \rangle \rightarrow \langle c_1, \sigma \rangle}
+\end{prooftree}
+
+\vspace{1cm}
+
+\begin{prooftree}
+  \infer0[$\interp{b}\sigma = ff$]{\langle \text{if }b \text{ then }c_1 \text{ else }c_2, \sigma \rangle \rightarrow \langle c_2, \sigma \rangle}
+\end{prooftree}
+
+\vspace{1cm}
+
+\begin{prooftree}
+  \hypo{\langle c_1, \sigma \rangle \rightarrow \langle c_1', \sigma' \rangle}
+  \infer1{\langle c_1; c_2, \sigma \rangle \rightarrow \langle c_1' ; c_2, \sigma'\rangle}
+\end{prooftree}
+\begin{prooftree}
+  \hypo{\langle c_1, \sigma \rangle \rightarrow \sigma'}
+  \infer1{\langle c_1; c_2, \sigma \rangle \rightarrow \langle c_2, \sigma'\rangle}
+\end{prooftree}
+
+\vspace{1cm}
+
+\begin{prooftree}
+  \hypo{\langle c_1,\sigma \rangle \rightarrow \langle abort, \sigma' \rangle }
+  \infer1{\langle c_1;c_2, \sigma \rangle \rightarrow \langle abort, \sigma' \rangle}
+\end{prooftree}
+
+\vspace{1cm}
+
+\begin{prooftree}
+  \infer0[$\interp{b}\sigma = ff$]{\langle \text{while }b \text{ do }c, \sigma \rangle \rightarrow \sigma}
+\end{prooftree}
+
+\vspace{1cm}
+
+\begin{prooftree}
+  \infer0[$\interp{b}\sigma = tt$]{\langle \text{while }b \text{ do }c, \sigma \rangle \rightarrow \langle c; \text{while }b\text{ do }c, \sigma \rangle}
+\end{prooftree}
+
+\vspace{1cm}
+
+\begin{prooftree}
+  \hypo{\langle c, [\sigma|v:\interp{e}\sigma]\rangle \rightarrow \langle abort, \sigma' \rangle}
+  \infer1{\langle \text{newvar }v:=e\text{ in }c, \sigma \rangle \rightarrow \langle abort, [\sigma' | v: \sigma(v)] \rangle}
+\end{prooftree}
+
+\vspace{1cm}
+
+\begin{prooftree}
+  \hypo{\langle c, [\sigma|v:\interp{e}\sigma]\rangle \rightarrow \sigma'}
+  \infer1{\langle \text{newvar }v:=e\text{ in }c, \sigma \rangle \rightarrow [\sigma'|v:\sigma(v)]}
+\end{prooftree}
+
+\begin{prooftree}
+  \hypo{\langle c, [\sigma|v:\interp{e}\sigma]\rangle \rightarrow \langle c', \sigma' \rangle}
+  \infer1{\langle \text{newvar }v:=e \text{ in }c, \sigma \rangle \rightarrow \langle \text{newvar }v:=\sigma'(v) \text{ in }c', [\sigma'|v:\sigma(v)]}
+\end{prooftree}
+\par}
+
+\section{Handling input and output}
+\[\nonterminal{comm}::= \ldots | ?\nonterminal{var} | !\nonterminal{intexp}\]
+1. This time we have to change the form or type of $\rightarrow$. It is no longer a binary relation, but a ternary relation
+\[\rightarrow \subseteq \Gamma_N \times \Lambda \times \Gamma\]
+\[\lambda \in \Lambda \stackrel{def}{=} \{\epsilon\}\footnote{transition or execution without input or output} \cup \{?n|n \in \mathbb{Z}\}\footnote{transition with an input} \cup \{!n|n \in \mathbb{Z}\}\footnote{transition with an output}\]
+We write $\langle c, \sigma \rangle \stackrel{\lambda}{\rightarrow} \gamma$ to mean $\langle \langle c, \sigma \rangle, \lambda, \gamma \rangle \in \rightarrow$.
+We also often omit $\lambda$ if $\lambda = \epsilon$.
+
+2. Why do we make this change? It is because adding $?v$ and $!e$ to the language makes it necessary to describe some aspects of intermediate steps of computatiosn explicitly.
+
+3. We include all the rules (except the ones for $c_1; c_2$ and newvar) that we defined in 5. Of course, the occurence of $\rightarrow$ in those old rules should be understood as $\stackrel{\epsilon}{\rightarrow}$ with $\epsilon$ omitted for simplicity. In addition to these rules, we have the follwing rules:
+{\center
+\begin{prooftree}
+  \infer0{\langle ?v, \sigma \rangle \stackrel{?n}{\rightarrow} [\sigma|v:n]}
+\end{prooftree}\hspace{1cm}
+\begin{prooftree}
+  \infer0{\langle !e, \sigma \rangle \stackrel{!\interp{e}\sigma}{\rightarrow} \sigma}
+\end{prooftree}
+
+\vspace{1cm}
+
+\begin{prooftree}
+  \hypo{\langle c_0, \sigma \rangle \stackrel{\lambda}{\rightarrow} \sigma'}
+  \infer1{\langle c_0; c_1, \sigma \rangle \stackrel{\lambda}{\rightarrow} \langle c_1, \sigma' \rangle}
+\end{prooftree} \hspace{1cm}
+\begin{prooftree}
+  \hypo{\langle c_0, \sigma \rangle \stackrel{\lambda}{\rightarrow} \langle c_0', \sigma'\rangle}
+  \infer1{\langle c_0; c_1, \sigma \rangle \stackrel{\lambda}{\rightarrow} \langle c_0';c_1, \sigma' \rangle}
+\end{prooftree}\hspace{1cm}
+\begin{prooftree}
+  \hypo{\langle c_0, \sigma \rangle \stackrel{\lambda}{\rightarrow} \langle abort, \sigma' \rangle}
+  \infer1{\langle c_0; c_1, \sigma \rangle \stackrel{\lambda}{\rightarrow} \langle abort, \sigma' \rangle}
+\end{prooftree}
+
+\vspace{1cm}
+
+\begin{prooftree}
+  \hypo{\langle c, [\sigma | v:\interp{e} \sigma]\rangle \stackrel{\lambda}{\rightarrow} \sigma'}
+  \infer1{\langle \text{newvar }v:=e \text{ in }c, \sigma \rangle \stackrel{\lambda}{\rightarrow} [\sigma'|v:\sigma(v)]}
+\end{prooftree}
+
+\vspace{1cm}
+
+\begin{prooftree}
+  \hypo{\langle c, [\sigma|v:\interp{e}\sigma] \stackrel{\lambda}{\rightarrow} \langle abort, \sigma' \rangle}
+  \infer1{\langle \text{newvar }v:=e \text{ in }c, \sigma \rangle \stackrel{\lambda}{\rightarrow} \langle abort, [\sigma'|v:\sigma(v)]}
+\end{prooftree}
+
+\vspace{1cm}
+
+\begin{prooftree}
+  \hypo{\langle c, [\sigma|v:\interp{e}\sigma]\rangle \stackrel{\lambda}{\rightarrow}\langle c', \sigma' \rangle}
+  \infer1{\langle \text{newvar }v:=e \text{ in }c, \sigma \rangle \stackrel{\lambda}{\rightarrow} \langle \text{newvar }v:=\sigma'(v) \text{ in }c', [\sigma'|v:\sigma(v)]\rangle}
+\end{prooftree}
+\par}
+Whenever an old rule contains a premise, we copy the rule and put $\lambda$ above $\rightarrow$ in the premise and the concolusion, so that the label $\lambda$ gets propagated from the execution of a subcommand to that of the original command.
+
+4. The operational semantics corresponds to the denotational semantics that we studied. The correspondence is formalised by the function $F$ in p134 of the textbook. Intuitively, $F$ runs a configuration until it finishes, or outputs a number, or waits for an input. $F$ then returns what it gets when it completes this execution. In a sense, the correspondence says hat the denotational semantics comes from the operational semantics after unobservable intermediate states are abstracted away. For detail, look at the textbook.
+
+\end{document}
