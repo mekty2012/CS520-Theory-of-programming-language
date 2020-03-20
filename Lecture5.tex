@@ -1,0 +1,326 @@
+\documentclass{report}[12pt]
+
+\usepackage{mathtools,enumitem,amssymb,amsmath,kotex,amsfonts,listings,stmaryrd,amsthm}
+\usepackage{xfrac,txfonts}
+\usepackage{graphicx}
+\usepackage{mathrsfs}
+\usepackage{subcaption}
+\usepackage{ebproof}
+\usepackage{tikz}
+
+\usetikzlibrary{trees}
+\usetikzlibrary{cd}
+\begin{document}
+
+\setlength\parindent{0pt}
+
+\newtheoremstyle{break}
+  {\topsep}{\topsep}%
+  {\itshape}{}%
+  {\bfseries}{}%
+  {\newline}{}%
+
+\theoremstyle{break}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\newtheorem{lemma}{Lemma}
+\newtheorem{example}{Example}
+\newcommand{\nonterminal}[1]{\langle \text{#1}\rangle}
+\newcommand{\rem}[0]{\text{ rem }}
+\newcommand{\interp}[1]{\llbracket #1 \rrbracket}
+\newcommand{\bbot}[0]{\Perp}
+\newcommand{\TODO}[1]{TODO : #1}
+
+\setcounter{chapter}{5}
+
+\title{CS520 Lecture 5\\Failure, Input-Output, and Continuation}
+\maketitle
+
+\section{Motivation}
+1. Realistic programming languages have a wide range of language constructs and features. In particular, they have constructs for input and output, and those for altering the flow of executions.
+
+2. We will study mathematical tools that allow us to study or analyze constructs for input-output and the fail operation, the simplist operator for changing the flow of execution.
+
+3. Specifically, we will study recursively defined domains, the disjoint union of domains and continuations, and use them to define denotational semantics of an imperative language with input-output and failure.
+
+4. Here are a few transferable high-level messages that I want you to learn in the chapter.
+\begin{enumerate}
+  \item Recursively defined domains can be used to model computations with intermediate results (such as computations with outputs) and computations that may be stopped in the middle and be resumed later (such as computations with inputs).
+  \item Continuations may simplify semantic definitions by providing a canonical treatment of sequential composition operator.
+\end{enumerate}
+
+\section{Syntax of a programming language with failure \& input-output}
+1.
+\begin{align*}
+  \nonterminal{comm} ::= &\overbrace{\ldots | \text{newvar } \nonterminal{var}:=\nonterminal{intexp}\text{ in }\nonterminal{comm}}^{\text{old stuff}} \\
+  &| \underbrace{\text{ fail }}_{failure} | \underbrace{?\nonterminal{var}}_{input} | \underbrace{!\nonterminal{intexp}}_{output}
+\end{align*}
+fail terminates the current execution and makes the current state the final state of execution modulo the restoration of values of global variables.
+
+2. \underline{example}
+\[x:=124;\text{while true do }(?y;\text{if }(y=0)\text{ then fail else }(x:=x/y;y;!x))\]
+
+3. \underline{exercises}
+\begin{itemize}
+  \item write two interesting programs in this language.
+  \item what should be the final state of the following program?
+  \begin{align*}
+    x:=124;y:=0;
+    (\text{newvar }x:=3\text{ in fail});
+    y:=2
+  \end{align*}
+\end{itemize}
+
+\section{Semantics}
+1. The most important step in defining the semantics is to decide the form of the interpretation function for commands:
+\[\interp{-} \in [\nonterminal{comm} \rightarrow \underbrace{[A \rightarrow_C B]}_{continuous functions}]\]
+what predomains or domains should we use for $A$ and $B$?
+
+2. A should be $\Sigma = [\nonterminal{var} \rightarrow \mathbb{Z}]$, the set (or predomains) of states. (Recall that a set can be viewed as a predomain when it is given = as its order $\sqsubseteq$, which is called discrete order).
+
+3. B is complex. Its elements describe computations that can be stopped and resument, and may output some integers in the middle. Formally,
+\[B = \overbrace{\Omega \backsimeq (\hat{\Sigma} + (\mathbb{Z} \times \Omega) + (\mathbb{Z} \rightarrow_C \Omega))_\bot}^{\Omega \text{ satisfies a form of equation}}\]
+The RHS of the isomorphism says that there are five kinds of outcomes of running a command at a given state. We list these cases below:
+
+\begin{tabular}{l@{$\cdots$}r}
+  non-termination & $\bot$ \\
+  normal termination with a state $\sigma$  & $\sigma \in \Sigma$ \\
+  abnormal termination with a state $\sigma$ & $\langle abort, \sigma \rangle$ \\
+  output n and the rest of computation $\omega$ & $\langle n, \omega \rangle \in \mathbb{Z} \times \Omega$ \\
+  suspended computation g that waits for an input & $g \in \mathbb{Z} \rightarrow_C \Omega$
+\end{tabular}
+
+4. Many things here are not defined nor explained. We will look at them one by one. But before doing so, let's try to understand intuitions behind this definition.
+
+5. The description of $\Omega$ uses two pre-domain constructors, sum + and product $\times$. Let $P_0, \ldots, P_{n-1}$ be pre-domains and let $\sqsubseteq_0, \ldots, \sqsubseteq_{n-1}$ be the partial orders of these pre-domains.
+
+From these pre-domains, we can construct the following two pre-domains, their sum and product:
+\begin{align*}
+  &P_0 + \ldots + P_{n-1} = \{\langle 0, x \rangle|x\in P_0\} \cup \ldots \cup \{\langle n-1, x \rangle | x \in P_{n-1}\} \\
+  &\langle i, x \rangle \sqsubseteq \langle j, y \rangle \text{ iff }i=j \text{ and }x\sqsubseteq_i y \\
+  &P_0 \times \ldots \times P_{n-1} = \{\langle x_0, \ldots, x_{n-1} \rangle | x_i \in P_i \text{ for all } i\} \\
+  &\langle x_0, \ldots, x_{n-1} \rangle \sqsubseteq \langle y_0, \ldots, y_{n-1} \rangle \text{ iff }x_i \sqsubseteq_i y_i \text{ for all }i
+\end{align*}
+
+1) exercise. Show that $P_0 + \ldots P_{n-1}$ and $P_0 \times P_{n-1}$ are pre-domains. Also, prove that $P_0 \times P_{n-1}$ is a domain if all of $P_i$'s are domains.
+
+Hint/Information
+
+a. The least upper bound of a chain $\{\langle x_0^{(k)}, \ldots, x_{n-1}^{(k)} \rangle\}_k$ in $P_0 \times \ldots \times P_{n-1}$ can be computed componentwise.
+\[\sqcup_{k=0}^\infty \langle x_0^{(k)} , \ldots, x_{n-1}^{(k)} \rangle = \langle \sqcup_{k=0}^\infty x_0^{(k)}, \ldots, \sqcup_{k=0}^\infty x_{n-1}^{(k)} \rangle\]
+
+b. For every chain $\{z_k\}_k$ in $P_0 + \ldots + P_{n-1}$, there are some i and a chain $\{x_k\}_k$ in $P_i$ s.t. $z_k = \langle i, x_k \rangle $.
+
+2) THese predomain constructors correspond to the sum and product type constructors in programming languages.
+
+3) For each case, we have a way to construct an element, and a way to destruct an element.
+
+Constructors :
+\begin{enumerate}
+  \item injection function
+  \begin{align*}
+    &i_k \in [P_k \rightarrow_C P_0 + \ldots + P_{n-1}] \\
+    &i_k(x) = \langle k, x \rangle
+  \end{align*}
+  \item For $f_0 \in [P \rightarrow_C P_0], \ldots, f_{n-1} \in [P\rightarrow_C P_{n-1}]$, the "target-tupling" function
+  \begin{align*}
+    f_0 \otimes \ldots \otimes f_{n-1} \in [P \rightarrow_C P_0 \times \ldots \times P_{n-1}] \\
+    (f_0 \otimes \ldots \otimes f_{n-1})(x) = \langle f_0(x), \ldots, f_{n-1}(x) \rangle
+  \end{align*}
+\end{enumerate}
+Destructors :
+\begin{enumerate}
+  \item For $f_0 \in [P_0 \rightarrow_C P], \ldots, f_{n-1} \in [P_{n-1} \rightarrow_C P]$, the "source-tupling" function
+  \begin{align*}
+    &f_0 \oplus \ldots \oplus f_{n-1} \in [P_0 + \ldots + P_{n-1}] \rightarrow_C P] \\
+    &(f_0 \oplus \ldots \oplus f_{n-1})(\langle i, x \rangle) = f_i (x)
+  \end{align*}
+  \item projection function
+  \begin{align*}
+    &\pi_k \in [P_0 \times \ldots \times P_{n-1} \rightarrow_C P] \\
+    &\pi_k \langle x_0, \ldots, x_{n-1} \rangle = x_k
+  \end{align*}
+\end{enumerate}
+These constructors and destructors are mutually inveres in a sense Prop 5.1 and Prop 5.2 in the textbook express such inverse relationships.
+
+4) The sum and product operators can be applied to continuous functions so as to build a new continuous functions. For instance, if
+\[f_0 \in [P_0 \rightarrow_C P_0'], \ldots, f_{n-1} \in [P_{n-1} \rightarrow_C P_{n-1}'']\]
+then we have the following two continuous functions
+\begin{align*}
+  &(f_0 + \ldots + f_{n-1}) \in [P_0 + \ldots + P_{n-1} \rightarrow P_0' + \ldots + P_{n-1}'] \\
+  &(f_0 + \ldots + f_{n-1}) \langle i, x \rangle = \langle i, f_i(x) \rangle \\
+  &(f_0 \times \ldots \times f_{n-1}) \in [P_0 \times \ldots \times P_{n-1} \rightarrow P_0' \times \ldots \times P_{n-1}'] \\
+  &(f_0 \times \ldots \times f_{n-1}) \langle x_0, \ldots, x_{n-1} \rangle = \langle f_0(x_0), \ldots, f_{n-1} (x_{n-1}) \rangle
+\end{align*}
+Many predomain constructors similarly induce constructors for continuous functions. This is because they are functors on  the category of predomains and continuous functions. We will look at such category-theoretic foundation in some later lectures.
+
+6. One nontrivial important concept is a recursively-defined domain. Recall the description of $\Omega$ in the beginning of this lecture:
+\begin{align*}
+  &\Omega \backsimeq (\hat \Sigma + (\mathbb{Z} \times \Omega) + (\mathbb{Z}\rightarrow \Omega))_\bot \\
+  &\hat \Sigma = \Sigma + \Sigma
+\end{align*}
+
+$\backsimeq$ means the presence of two continuous functions $\psi, \phi$
+\[\Omega \underset{\psi}{\overset{\phi}{\rightleftarrows}} (\hat \Sigma + (\mathbb{Z} \times \Omega) + (\mathbb{Z} \rightarrow \Omega))_\bot\]
+such that
+\[\phi \circ \psi = id \text{ and } \psi \circ \phi = id\]
+Note that the RHS of $\backsimeq$ contains $\Omega$, something that is being defined. It is a bit like $\Omega$ is defined in terms of $\Omega$, i.e. recursively. Or we can say that $\Omega$ is a fixed point of some equations over domains.
+
+1) $\Omega$ is the domain of possible outcomes. The isomorphism $\phi$ confirms that it consists of five kinds of elements correspondint to five different outcomes described earlier.
+
+2) $\Omega$ is not just a solution of the recursive domain equation. It satisfies the following minimality condition (also called initiality).
+
+For any domain D and any continuous function $\alpha$
+\[\alpha \in [(\hat \Sigma + (\mathbb{Z} \times D) + (\mathbb{Z}\rightarrow D))_\bot] \rightarrow_C D\]
+there exists a unique continuous function $\beta$
+\[\beta \in [\Omega \rightarrow_C D]\]
+such that the following diagram commutes. \\
+\begin{tikzcd}[column sep=large]
+  (\hat \Sigma + (\mathbb{Z} \times \Omega) + (\mathbb{Z}\rightarrow \Omega))_\bot \arrow[d,"\phi"] \arrow[rr,"(id_{\hat\Sigma} + (id_\mathbb{Z} \times \beta)+(\mathbb{Z}\rightarrow \beta))_\bot"]& \phantom{None}&
+  (\hat \Sigma + (\mathbb{Z} \times D) + (\mathbb(Z)\rightarrow D))_\bot \arrow[d,"\alpha"] \\
+  \Omega \arrow[rr,"\beta"] & & D
+\end{tikzcd}
+
+\begin{align*}
+  &(\mathbb{Z} \rightarrow \beta) \in [(\mathbb{Z}\rightarrow \Omega) \rightarrow_C (\mathbb{Z}\rightarrow D) \\
+  &(\mathbb{Z} \rightarrow \beta) (g) (n) = \beta(g(n))
+\end{align*}
+\begin{align*}
+  &\forall f \in [D' \rightarrow_C D''], \text{ we have} \\
+  &f_\bot \in [D_\bot' \rightarrow_C D_\bot ''] \\
+  &f_\bot (\alpha') = f(\alpha') \text{ for }\alpha' \in D' \\
+  &f_\bot (\bot) = \bot
+\end{align*}
+One important consequence is that we can define a continuous function from $\Omega$ by case analysis, just as we can define a function on programs in a syntax-directed manner.
+
+3) Why does such $\Omega$ exist? Because the predomain constructors used in the RHS of $\backsimeq$ are all very good, that is, they satisfy so called local continuity. The situation is very similar to the one for the fixed point theorem. There we require a function to be continuous. Here, we use an analogous property on an operator that constructs a domain. Later we will study this in detail.
+
+4) A few basic embedding operators
+\begin{align*}
+  &i_\bot \in [\{\bot\} \rightarrow_C \Omega] \\
+  &i_\bot (\bot) = \psi(\bot_\Omega) \\
+  &i_{term} \in [\Sigma \rightarrow_C \Omega] \\
+  &i_{term} (\sigma) = \psi(\langle 0, \langle 0, \sigma \rangle \rangle) = \psi(\sigma) \\
+  &i_{abort} \in [\Sigma \rightarrow_C \Omega] \\
+  &i_{abort} (\sigma) = \phi (\langle 0, \langle 1, \sigma \rangle \rangle) = \psi(\langle abort, \sigma \rangle) \\
+  &i_{out} \in [\mathbb{Z} \times \Omega \rightarrow_C \Omega] \\
+  &i_{out} (n, \omega) = \psi(\langle 1, \langle n, \omega \rangle \rangle) = \psi(\langle n, \omega \rangle) \\
+  &i_{in} \in [[\mathbb{Z} \rightarrow \Omega] \rightarrow_C \Omega] \\
+  &i_{in} (g) = \psi(\langle 2, g \rangle) = \psi(g)
+\end{align*}
+5) Consider $f \in [\Sigma \rightarrow_C \Omega]$ and $h\in [\Sigma \rightarrow_C \Sigma]$. We want to define $f_* \in [\Omega \rightarrow_C \Omega]$ and $h_\dagger \in [\Omega \rightarrow_C \Omega]$ such that $f_*$ applies $f$
+only for the normally terminating state part of a given $\omega \in \Omega$ and $h_\dagger$ applies $h$ to the terminating or failing state part of $\omega$. For instance,
+\begin{align*}
+  &f_* (i_{out} (3, i_{out} (4, i_{term} (\sigma)))) = i_{out} (3, i_{out} (4, f(\sigma))) \\
+  &f_* (i_{out} (3, i_{abort} (\sigma))) = i_{out}(3, i_{abort} (\sigma)) \\
+  &h_\dagger (i_{out} (3, i_{term} (\sigma))) = i_{out} (3, i_{term} (h(\sigma))) \\
+  &h_\dagger (i_{out} (3, i_{abort} (\sigma))) = i_{out} (3, i_{abort} (h(\sigma)))
+\end{align*}
+How to define $f_*$ and $h_\dagger$? Because 2), we can do it by case analysis
+\begin{align*}
+  &f_* (i_\bot (\bot)) = i_\bot (\bot) \\
+  &f_* (i_{term} (\sigma)) = i_{term} (f(\sigma)) \\
+  &f_* (i_{abort} (\sigma)) = i_{abort} (\sigma) \\
+  &f_* (i_{out} (n, \omega)) = i_{out} (n, f_* (\omega)) \\
+  &f_* (i_{in} (g)) = i_{in} (\lambda n. f_* (g(n))) \\
+  &h_\dagger (i_{\bot} (\bot)) = i_\bot (\bot) \\
+  &h_\dagger (i_{term} (\sigma)) = i_{term} (h(\sigma)) \\
+  &h_\dagger (i_{abort} (\sigma)) = i_{abort} (h(\sigma)) \\
+  &h_\dagger (i_{out} (n, \omega)) = i_{out} (n, h_\dagger (\omega)) \\
+  &h_\dagger (i_{in} (g)) = i_{in} (\lambda n. h_\dagger (g(n)))
+\end{align*}
+exercise. In both cases, we have well-defined $f_*$ and $h_\dagger$ because of the minimality condition in 2). Find appropriate $\alpha$ and $D$.
+
+5)
+For $\omega, \omega' \in \Omega$, $\omega \sqsubseteq \omega'$ intuitively if we can optain $\omega'$ by replacing $\bot$ in $\omega$. Intuitively, $\sqsubseteq$ represents the progression of computation.
+
+examples.
+\begin{align*}
+  &i_{out} (3, i_{out} (4, \underline{\bot_\Omega}(=i_\bot(\bot))))\sqsubseteq i_{out} (3, i_{out} (4, \underline{i_{out} (5, i_{term} (\sigma))})) \\
+  &i_{in} (\lambda n. i_{out} (n + 1, \underline{\bot_\Omega})) \sqsubseteq i_{in} (\lambda n. i_{out} (n + 1, \underline{i_{in} (\lambda m. i_{out} (n + m, \bot_\Omega))}))
+\end{align*}
+
+7. Interpretation of commands
+\begin{align*}
+  &\interp{-} \in [\nonterminal{comm} \rightarrow [\Sigma \rightarrow_C \Omega]] \\
+  &\interp{skip} \sigma = i_{term}(\sigma)\\
+  &\interp{c_1; c_2}\sigma = \interp{c_2}_* (\interp{c_1} \sigma)\\
+  &\interp{\text{if }b \text{ then }c_1 \text{ else }c_2} \sigma = \text{ if }\interp{b}\sigma \text{ then }\interp{c_1} \sigma\text{ else }\interp{c_2} \sigma \\
+  &\interp{\text{while }b \text{ do }c}\sigma = (Y_{\Sigma \rightarrow_C \Omega} F) (\sigma) \\
+  &\text{  where }F(f)(\sigma) = \text{ if }\interp{b}\sigma \text{ then }f_* (\interp{c}\sigma) \text{ else }\sigma \\
+  &\interp{fail} \sigma = i_{abort} (\sigma) \\
+  &\interp{!e} \sigma = i_{out} (\interp{e}\sigma, i_{term} (\sigma)) \\
+  &\interp{?v} \sigma = i_{in} (\lambda n. i_{term}([\sigma|v:n])) \\
+  &\interp{\text{newvar }v:=e \text{ in }c}\sigma =
+  (\lambda \sigma'. [\sigma'|v:\sigma(v)])_\dagger (\interp{c}[\sigma|v:\interp{e}\sigma]) \\
+  &\interp{v:=e}\sigma = i_{term}([\sigma|v:\interp{e}\sigma])
+\end{align*}
+exercises
+
+1) Prove the following equations:
+\[\interp{x:=3;!x} = \interp{x:=3;!3}\]
+\[\interp{fail;c} = \interp{fail}\]
+2) Does the following equation hold?
+\[\interp{?x;y:=3} = \interp{y:=3;?x}\]
+
+\section{Continuation Semantics}
+1. The continuation semantics is an alternative, more general way of interpreting commands. The key concept here is continuation, which is some mathematical entity representing the rest of computation. Intuitively, a continuation denotes what will happen all the way until the end when the current command finishes normally. In the continuation semantics, we interpret a command as a function that takes a continuation $\kappa$ and a state $\sigma$, and computes/returns the ultimate answer of the entire computation.
+
+2. Let's ignore the command "fail" for now. Mathematically, the continuation semantics defines the following function:
+\[\interp{-}^{cont} \in [\nonterminal{comm} \rightarrow (\Sigma \rightarrow_C \Omega) \rightarrow_C \Sigma \rightarrow_C \Omega]\]
+Compare it with the (direct) semantics that we looked at earlier:
+\[\interp{-} \in [\nonterminal{comm} \rightarrow \Sigma \rightarrow_C \Omega]\]
+We have the extra part $(\Sigma \rightarrow_C \Omega) \rightarrow_C$, which expresses that $\interp{-}^{cont}$ takes an additional continuation parameter $\kappa$, compared with the (direct) semantics $\interp{-}$. Thus, when $\kappa\in [\Sigma\rightarrow_C \Omega], \sigma \in \Sigma$
+\[\omega\footnote{result of running $c$ and then $\kappa$ on the state $\sigma$} = \interp{c}^{cont} (\kappa\footnote{computation to be done after $c$}) (\sigma\footnote{initial state}) \in \Omega\]
+
+3. A good way to learn this continuation semantics is to complete the definition of $\interp{-}^{cont}$ based on the intuition that we discussed so far. So, hide the semantic clause in each case, and try to rediscover the clause for yourself.
+\begin{align*}
+  &\interp{c}^{cont} \in [[\Sigma \rightarrow_C \Omega]\rightarrow_C \Sigma \rightarrow_C \Omega] \\
+  &\interp{v:=e}^{cont} \kappa \sigma = \kappa ([\sigma|v:\interp{e}\sigma]) \\
+  &\interp{skip}^{cont} \kappa \sigma = \kappa (\sigma) \\
+  &\interp{c_0; c_1}^{cont} \kappa \sigma = \interp{c_0}^{cont} (\lambda \sigma'. \interp{c_1}^{cont} \kappa \sigma' ) \sigma \\
+  &\interp{\text{if }b \text{ then }c_0 \text{ else }c_1}^{cont} \kappa \sigma =
+  \text{ if }\interp{b}\sigma \text{ then }\interp{c_0}^{cont} \kappa \sigma ]text{ else }\interp{c_1}^{cont} \kappa \sigma \\
+  &\interp{\text{while }b \text{ do }c_0}^{cont} \kappa \sigma = (Y_{\Sigma \rightarrow_C \Omega}(F))(\sigma) = (\sqcup_{n=0}^\infty F(\bot)) (\sigma) \\
+  &\text{  where} F \in ([\Sigma \rightarrow_C \Omega] \rightarrow_C [\Sigma \rightarrow_C \Omega]) \\
+  &\phantom{\text{  where}}F(\kappa')(\sigma') = \text{if }\interp{b}\sigma \text{ then }\interp{c_0}^{cont} \kappa' \sigma' \text{ else }\kappa(\sigma')
+\end{align*}
+As usual, the most tricky part is the case for while. Note that we define the operator $F$ on the domain of continuation, $[\Sigma \rightarrow_C \Omega]$, not on the domain of commands $[[\Sigma \rightarrow_C \Omega]\rightarrow_C \Sigma \rightarrow_C \Omega]$, and then we use the least fixed point of $F$, which denotes some continuation in $[\Sigma \rightarrow_C \Omega]$. In the (direct) semantics, we used the domain of commands.
+
+4. Our definition is not complete. we should define $\interp{?v}^{cont}$ and $\interp{!e}^{cont}$ and $\interp{\text{newvar }v:=e \text{ in }c}^{cont}$.
+\begin{alignat*}{2}
+  &\interp{!e}^{cont} \kappa \sigma = i_{out}(\interp{e}\sigma, \kappa(\sigma)) &\hspace{-2cm}(\text{Recall }i_{out} \in [\mathbb{Z}\times \Omega \rightarrow_C \Omega]) \\
+  &\interp{?v}^{cont} \kappa \sigma = i_{in} (\lambda k\in \mathbb{Z}. \kappa ([\sigma|v:k])) &\hspace{-2cm}(\text{Recall }i_{in} \in [[\mathbb{Z} \rightarrow_C \Omega] \rightarrow_C \Omega]) \\
+  &\interp{\text{newvar }v:=e\text{ in }c}^{cont} \kappa \sigma = \interp{c}^{cont} (\lambda \sigma'. \kappa ([\sigma' | v:\sigma(v)]))[\sigma|v:\interp{e}\sigma]
+\end{alignat*}
+5. THe (direct) semantics and the continuation semantics are closely related. In a sense, this should be the case because both semantics are dealing with the same thing. Here is the formal relationship:
+\[\interp{c}^{cont} \kappa \sigma = \kappa_* (\interp{c}\sigma)\]
+\underline{exercise} Prove the above equation.
+
+6. So far we didn't consider the command fail. Now it is time to stop ignoring it. Can we add a new semantics clause for $\interp{fail}^{cont}$? what about the following?
+\[\interp{fail}^{cont} \kappa \sigma = i_{abort} (\sigma)\hspace{2cm} (\text{Recall }i_{abort}\in [\Sigma \rightarrow_C \Omega])\]
+Unfortunately, this simple definition doesn't work.
+\begin{align*}
+  &\interp{\text{newvar }x:=1\text{ in }fail}^{cont} \kappa \sigma \hspace{2cm}(\text{where }\sigma(x) = 0) \\
+  &=\interp{fail}^{cont} (\lambda \sigma'. \kappa ([\sigma'|x:\sigma(x)])) [\sigma|x:1]
+  &=[\sigma|x:1] \neq \sigma
+\end{align*}
+
+7. One solution is to pass two continuations, one for normal computation and the other for aborted computation.
+\begin{align*}
+  &\interp{-}_2^{cont} \in [\nonterminal{comm}\rightarrow [\Sigma \rightarrow_C \Omega]\footnote{for normal computation} \rightarrow_C [\Sigma \rightarrow_C \Omega]\footnote{for aborted computation} \rightarrow_C \Sigma \rightarrow_C \Omega] \\
+  &\interp{v:=e}_2^{cont} \kappa_t \kappa_f \sigma = \kappa_t ([\sigma|v:\interp{e}\sigma]) \\
+  &\interp{skip}_2^{cont} \kappa_t \kappa_f \sigma = \kappa_t (\sigma) \\
+  &\interp{c_1;c_2}_2^{cont} \kappa_t \kappa_f \sigma = \interp{c_1}_2^{cont} (\interp{c_2}_2^{cont} \kappa_t \kappa_f) \kappa_f \sigma \\
+  &\interp{\text{if }b \text{ then }c_1 \text{ else }c_2}_2^{cont} \kappa_t \kappa_f \sigma = \text{ if }\interp{b}\sigma \text{ then }\interp{c_0}_2^{cont} \kappa_t \kappa_f \sigma \text{ else }\interp{c_1}_2^{cont} \kappa_t \kappa_f \sigma \\
+  &\interp{\text{while }b \text{ do }c}_2^{cont} \kappa_t \kappa_f \sigma = (Y_{\Sigma \rightarrow_C \Omega} (F)) (\sigma) = (\sqcup_{n=0}^{\infty} F^n (\bot)) (\sigma) \\
+  &\text{  where } F(\kappa)(\sigma') = \text{if }\interp{b}\sigma' \text{ then }\interp{c}_2^{cont} \kappa \kappa_f \sigma' \text{ else }\kappa_t (\sigma') \\
+  &\interp{\text{newvar }v:=e\text{ in }c}_2^{cont}\kappa_t \kappa_f \sigma = \\ &\quad\interp{c}_2^{cont} (\lambda \sigma'. \kappa_t ([\sigma'|v:\sigma(v)])) (\lambda \sigma'. \kappa_f ([\sigma'|v:\sigma(v)])) [\sigma|v:\interp{e}\sigma] \\
+  &\interp{fail}_2^{cont} \kappa_t \kappa_f \sigma = \kappa_f (\sigma) \\
+  &\interp{!e}_2^{cont} \kappa_t \kappa_f \sigma = i_{out} (\interp{e}\sigma, \kappa_t (\sigma)) \\
+  &\interp{?v}_2^{cont} \kappa_t \kappa_f \sigma = i_{in} (\lambda n. \kappa_t ([\sigma|v:n]))
+\end{align*}
+\end{document}
