@@ -1,0 +1,247 @@
+\documentclass{report}[12pt]
+
+\usepackage{mathtools,enumitem,amssymb,amsmath,kotex,amsfonts,listings,stmaryrd,amsthm}
+\usepackage{xfrac,txfonts}
+\usepackage{graphicx}
+\usepackage{mathrsfs}
+\usepackage{subcaption}
+\usepackage{ebproof}
+\usepackage{tikz}
+
+\usetikzlibrary{trees}
+\usetikzlibrary{cd}
+\begin{document}
+
+\setlength\parindent{0pt}
+
+\newtheoremstyle{break}
+  {\topsep}{\topsep}%
+  {\itshape}{}%
+  {\bfseries}{}%
+  {\newline}{}%
+
+\theoremstyle{break}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\newtheorem{lemma}{Lemma}
+\newtheorem{example}{Example}
+\newcommand{\nonterminal}[1]{\langle \text{#1}\rangle}
+\newcommand{\rem}[0]{\text{ rem }}
+\newcommand{\interp}[1]{\llbracket #1 \rrbracket}
+\newcommand{\bbot}[0]{\Perp}
+\newcommand{\TODO}[1]{TODO : #1}
+
+\setcounter{chapter}{7}
+
+\title{CS520 Lecture 7\\An Introduction to Category Theory}
+\maketitle
+\section{Motivation}
+1. The category theory is a branch of mathematics that studies essentially same or common notions and principles in different areas of mathematics. It is very abstract, but provides good guidelines about finding right definitions and right or meaningful questions to ask in a new mathematical theory.
+
+2. The category theory had huge influence on the research on programming languages and the development of practical programming languages, such as Scala, Haskell, and Rust.
+
+3. In this course, we will focus on the influence of the category theory on the semantics research. We will study abstract categorical concepts that give rise to popular notions appearing in the semantics of programming languages. Another big objective is to understand a result in the category theory (or a categorical formulation of domain theory) that ensures the existence of certain recursively defined domains, such as the following $\Omega$ that you saw in the chapter 5 of Reynolds' book
+\[\Omega \backsimeq (\hat \Sigma + \mathbb{Z} \times \Omega + [\mathbb{Z}\rightarrow \Omega])_\bot\]
+\[\hat{\Sigma} \stackrel{def}{=} \Sigma + \Sigma\]
+
+4. We will study only a tiny part of the category theory. If you are excited about it and are willing to read a math book, I recommend Mac Lane's "Categories for the working mathematicians".
+
+\section{Definition of Category}
+\begin{definition}
+  A category $\mathcal{C}$ is a tuple $(Obj, Hom, \circ, id)$ where
+  \begin{enumerate}
+    \item $Obj$ is a collection of elements called \underline{objects}.
+    \item for all objects $x, y \in Obj$, $Hom[x, y]$ is a collection of elements called \underline{morphisms} from $x$ to $y$.
+    \item for all objects $x, y, z \in Obj$, $\circ_{x, y, z}$ (or simply $\circ$) is a map from $Hom[y, z]\times Hom[x, y]$ to $Hom[x, z]$ and is called \underline{composition}
+    \item for every object $x\in Obj$, $id_x$ is an element in $Hom[x, x]$ and is called \underline{identity morphism}
+    \item these data should satisfy associativity and identity axioms
+    \begin{align*}
+      &[\text{associativity}] &[\text{identity}] \\
+      &\forall w, x, y, z \in Obj &\forall x, y \in Obj\\
+      &\forall f \in Hom[w, x] &\forall f \in Hom[x, y] \\
+      &\forall g \in Hom[x, y] &f \circ id_x = id_y \circ f = f\\
+      &\forall h \in Hom[y, z] &\\
+      &h \circ (g \circ f) = (h \circ g) \circ f &
+    \end{align*}
+  \end{enumerate}
+\end{definition}
+1. Although not perfect, a reasonably good intuition is that a category $\mathcal{C}$ is a collection of spaces that you encounter in mathematics, such as metric spaces, vector spaces, topological spaces, etc. The Obj part of $\mathcal{C}$ consists of spaces, and the $Hom[x, y]$ part of $\mathcal{C}$ consists of maps between spaces that preserve the structure of the spaces. $\circ$ is then the usual function composition and $id_x$ is the identity function on $x$.
+
+2. Here are some examples that match the intuition that I just explained.
+
+(1) Set $\cdots$ Category of sets and functions
+\begin{itemize}
+  \item obj is the collection of all sets.
+  \item $Hom[x, y]$ is the set of all functions from $x$ to $y$. \\
+  (Note that since $x, y \in Obj$, they are sets)
+  \item $\circ$ is the function composition.
+  \item $id_x$ is the identity function on $x$.
+\end{itemize}
+(2) Predom $\cdots$ Category of predomains and continuous functions.
+\begin{itemize}
+  \item obj is the collection of all predomains.
+  \item $Hom[x, y]$ is the set of all continous functions from $x$ to $y$.
+  \item $\circ$ is the function composition.
+  \item $id_x$ is the identity function on x.
+\end{itemize}
+(3) Dom $\cdots$ Category of domains and continuous functions.
+\begin{itemize}
+  \item obj is the collection of all domains.
+  \item $Hom[x, y]$ is the set of all continuous functions from $x$ to $y$.
+  \item $\circ$ is the function composition.
+  \item $id_x$ is the identity function on $x$.
+\end{itemize}
+Note that Dom is in a sense included in Predom. (Technically, it is a full subcategory of Predom).
+
+3. As indicated by my use of the phrase "not perfect", there are categories that do not match the intuition well. Here is a very well-known example.
+
+(1) Let $(X, \sqsubseteq)$ be a partially ordered set. It can be understood as a category:
+\begin{itemize}
+  \item obj $= X$
+  \item $Hom[x, y] = \begin{cases}
+    \o & \text{ if }x \not\sqsubseteq y \\
+    \{*\} \text{ if }x \sqsubseteq y
+\end{cases}$ (a set with one element. It doesn't matter what that element is)
+\item $id_x = *$
+\item $\circ_{x, y, z} \in [Hom[y,z]\times Hom[x, y]\rightarrow Hom[x, z]]$ \\
+If $x \sqsubseteq y$ and $y \sqsubseteq z$ (i.e. $Hom[x, y] \neq \o$ and $Hom[y, z] \neq \o$), then $\circ_{x, y, z}$ is the constant function to the unique element in $Hom[x, z]$. ($Hom[x, z]\neq \o$ in this case because of the transitivity of $\sqsubseteq$)\\
+ Otherwise, (i.e., $Hom[x, y]=\o$ or $Hom[y, z]=\o$), $\circ_{x, y, z}$ is the empty function (the function whose graph is the empty set).
+\end{itemize}
+
+4. In the category theory, we often use commutative diagrams to express the equality of two morhpisms. For instance,
+\begin{tikzcd}
+  x \arrow[r,"f"] \arrow[d,"k"]& y \arrow[d,"g"] \\ a \arrow[r,"h"] & z
+\end{tikzcd}
+expresses that $x, y, a, z$ are objects in a category, and $f, g, h, k$ are morphisms with domains and codomains indicated by the arrows (for instance, $f \in Hom[x, y]$),
+and $\underbrace{g \circ f = h \circ k}_{\text{the most important bit}}$
+
+5. Another intuition about categories is that objects in a category are types in a programming languages and morphisms from $x$ to $y$ are functions in the language from the input of type $x$ to the output of type $y$.
+
+\section{Initial and Terminal Objects, Product and Co-Product (or Sum)}
+1. In a category $\mathcal{C}$, we can build a new object out of existing ones. Often this new object sattisfies one of the well-known conditionsm and has a well-known name. We will study a few such names.
+
+2. Consider a category $\mathcal{C}$ and its objects $x, y$.
+
+(1) An object $z$ is a \underline{product} of $x$ and $y$, often written as $z=x\times y$, if there are morphisms $\underbrace{\pi_0 \in Hom[z, x]}_{\text{often written as}\atop \pi_0:x\times y \rightarrow x}$ and $\underbrace{\pi_1 \in Hom[z, y]}_{\text{often written as}\atop \pi_1:x\times y \rightarrow y}$
+s.t. for all objects $w$ and morphisms $f:w\rightarrow x$ and $g:w\rightarrow y$, there exists a unique morhpism $h\footnote{we often write $h$ as $\langle f, g \rangle$. Reynolds writes it as $f \otimes g$ }:w\rightarrow x \times y$ with $f=\pi_0 \circ h$ and $g = \pi_1 \circ h$.
+{\center
+\begin{tikzcd}
+  x & & y \\
+  & x \times y \arrow[ul,"\pi_0"] \arrow[ur,"\pi_1"] & \\
+  & z \arrow[u,dashrightarrow,"!h"] \arrow[uul,"f",bend left] \arrow[uur,"g",bend right] &
+\end{tikzcd}
+! means uniqueness. \\ $\cdots$ means existence.
+\par
+}
+(2) An object z is a \underline{co-product} (or \underline{sum}) of $x$ and $y$, often written as $z=x+y$, if there are morphisms $inj_0:x\rightarrow x + y$ and $inj_1 : y \rightarrow x + y$ s.t. for all objects $w$ and morhpisms $f:x\rightarrow w$ and $g : y \rightarrow w$, there exists a unique morphism $h\footnote{often written as $[f, g]$. Reynolds writes it as $f \oplus g$}:x+y \rightarrow w$ with $f=h\circ inj_0 $ and $g = h \circ inj_1$.
+{\center
+\begin{tikzcd}
+  & w & \\
+  & x + y \arrow[u,dashrightarrow,"!h"]& \\
+  x \arrow[uur,"f",bend left] \arrow[ur,"inj_0"]& & y \arrow[ul,"inj_1"] \arrow[uul,"g",bend right]
+\end{tikzcd}
+\par
+}
+(3) An object $x$ is \underline{initial} if for every object $w$, there exists the unique morphism $h:x\rightarrow w$.
+
+(4) An object $x$ is \underline{final} if for every object $w$, there exists the unique morhpism $h\footnote{often written as $!w$ or $!$}:w\rightarrow x$.
+
+3. Note that all of these notions are defined purely in terms of morphisms, without referring to elements of objects. This is a bit like specifying a property of an abstract data type in terms of its operations, not in terms of its implementatio(n.
+
+4. In the category Predom, the product of two predomains $P_0$ and $P_1$ that we studied in Chap 5 is indeed a categorical product in (1). Also, the sum of $P_0$ and $P_1$ in Chap 5 is indeed a categorical sum or co-product. The predomain of the singleton set $(\{*\}, \sqsubseteq)$ is a terminal object. The predomain of the empty set $(\{\}, \sqsubseteq)$ is an initial object.
+
+5. Consider the category corresponding to a partially ordered set $(X, \sqsubseteq)$. Then, an object $x \in X$ is initial if and only if it is the least element in $X$. It is final if and only if it is the greatest element. For objects $x, y$ in $X$, $x+y$ is the least upper bound of $x$ and $y$, and $x\times y$ is the greatest lower bound of $x$ and $y$.
+
+\underline{Exercise} Prove 4. and 5.
+\section{Functor and Natural Transformation}
+1. Intuitively, a functor is a structure-preserving map from one category to another. A natural transformation is a uniform map from one functor to another. In PL terms, a functor is a type constructor. (Recall that in this analogy, an object in a category is a type). And a natural transformation is a polymorphic function.
+
+2. Let $\mathcal{C}$ and $\mathcal{D}$ be categories.
+\begin{definition}
+  A \underline{functor} $F$ from $\mathcal{C}$ to $\mathcal{D}$ is a pair of two maps $F_{obj}$ and $F_{mor}$ s.t.
+  \begin{enumerate}
+    \item $F_{obj}$ map $\underbrace{\text{ objects in }\mathcal{C}}_{\text{objects of }\mathcal{C}}$ to objects in $\mathcal{D}$.
+    \item for objects $x, y\in Obj(\mathcal{C})$
+    \[(F_{mor})_{x, y} \in [\underbrace{Hom_{\mathcal{C}} [x, y]}_{\text{morphisms in }\mathcal{C}} \rightarrow \underbrace{Hom_{\mathcal{D}}[F_{obj}(x), F_{obj}(y)]}_{\text{morphisms in }\mathcal{D}}]\]
+    \item $F_{mor}$ preserves $\circ$ and $id$:
+    \[\text{for all objects }x \text{ of }\mathcal{C}, (F_{mor})_{x,x}(id_x) = id_{F_{obj}(x)}\]
+    \[\text{for all morhpisms } f\in Hom_{\mathcal{C}}[x, y]\text{ and }g \in Hom_{\mathcal{C}}[y, z],\]
+    \[(F_{mor})_{x, z}(g \circ f) = (F_{mor})_{y, z}(g) \circ (F_{mor})_{x, y}(f)\]
+  \end{enumerate}
+  we use $F$ to mean $F_{obj}$ and $(F_{mor})_{x, y}$
+\end{definition}
+3. To see common examples, we need to understant the product of two categories. When $\mathcal{C}$ and $\mathcal{D}$ are categories, \underline{the product category} $\mathcal{C} \times \mathcal{D}$ is defined as follows
+\begin{itemize}
+  \item $obj = \{(x, y)|x\in Obj(\mathcal{C}) \wedge y \in Obj(\mathcal{D})\}$
+  \item $Hom_{\mathcal{C}\times \mathcal{D}} [(u, v), (x, y)] = \{(f, g)|f \in Hom_{\mathcal{C}}[u, x] \wedge g \in Hom_{\mathcal{D}} [v, y]\}$
+  \item $(f, g)\circ (f', g') = (f \circ f', g \circ g')$
+  \item $id_{(x, y)} = (id_x, id_y)$
+\end{itemize}
+4. The $\times, +, \bot$ operators on predomains are in fact functors.
+\begin{align*}
+  &(-)_\bot : Predom \rightarrow Predom \\
+  &(-)_\bot (P) = P_\bot \\
+  &(-)_\bot (f) = \lambda x. \begin{cases}\bot & \text{if }x=\bot \\ f(x) & \text{if }x\neq \bot\end{cases} \\
+  &\times \footnote{product functor}:\underbrace{Predom \times Predom}_{\text{Product of categories}} \rightarrow Predom \\
+  &\times (P_0, P_1) = \underbrace{P_0 \times P_1}_{\text{Product of predomains}} \\
+  &\times (f, g) = \lambda (x, y). (f(x), g(y)) = f \times g \footnote{Reynolds' notation (and standard notation) that we covered in Chap 5} \\
+  &+\footnote{sum functor} : Predom \times Predom \rightarrow Predom \\
+  &+ (P_0, P_1) = \underbrace{P_0 + P_1}_{\text{sum of predomains}} \\
+  &+ (f, g) = \lambda x. \begin{cases} inj_0 (f(u)) & \text{if } x=inj_0(u) \\ inj_1 (g(v)) & \text{if }x=inj_1(v)\end{cases} = f+g\footnote{notation that we used in chap 5}
+\end{align*}
+5. One other Important functor is the identity functor:
+\begin{align*}
+  &Id:Predom \rightarrow Predom \\
+  &Id(X) = X \\
+  &Id(f) = f
+\end{align*}
+6. Let $F, G$ be functors from $\mathcal{C}$ to $\mathcal{D}$.
+\begin{definition}
+  A \underline{natural transformation} $\eta$ from $F$ to $G$ denoted $\eta:F\stackrel{\cdot}{\rightarrow}G:\mathcal{C}\rightarrow \mathcal{D}$ or
+  \begin{tikzcd}
+\mathcal{C} \arrow[r, bend left=50, ""{name=U, below},"F"]
+\arrow[r, bend right=50, ""{name=D},"G"']
+& \mathcal{D}
+\arrow[Rightarrow, from=U, to=D,"\eta"]
+\end{tikzcd}
+is a collection of morphisms in $\mathcal{D}$ indexed by objects in $\mathcal{C}$
+\[(\eta_x : F(x)\rightarrow G(x))){x \in Obj(\mathcal{C})}\]
+such that
+\begin{enumerate}
+  \item for each object $x$ in $\mathcal{C}$, $\eta_x$ is a $\mathcal{D}$-morphism form $F(x)$ to $G(x)$
+  \item for every morphism $f:x\rightarrow y$ in $\mathcal{C}$ (i.e. $f \in Hom_{\mathcal{C}}[x, y])$,
+  \begin{tikzcd}
+    F(x) \arrow[r, "\eta_x"] \arrow[d,"F(f)"]& G(x) \arrow[d,"G(f)"] \\
+    F(y) \arrow[r,"\eta_y"] & G(y)
+  \end{tikzcd}
+  This is called naturality condition \label{naturality}
+\end{enumerate}
+7. One intuition is that $F$ and $G$ are type constructors, and $\eta$ is a polymorphic function from $F$ to $G$. Whenver we are given a type $x$, we have an instantiation of $\eta$ at $x$ that is a function from the type $F(x)$ to the type $G(x)$. The condition 1 says that $\eta$ should typecheck. The condition 2 says that what $\eta$ does at $x$ should be identical in a sense to what it does at $y$. In other words, $\eta$ should not depend much on its type parameter $x$. This is called uniformity.
+
+8. Here are a few examples.
+\begin{align*}
+  &unit : id \stackrel{\cdot}{\rightarrow} (-)_\bot : Predom \rightarrow Predom \\
+  &unit_P \in [P \rightarrow P_\bot] \\
+  &unit_P (x) = x
+\end{align*}
+Let Fst be a functor from $\mathcal{C}\times \mathcal{D}$ to $\mathcal{C}$. defined by
+\begin{align*}
+  Fst(x, y\footnote{objects of categories}) = x \\
+  Fst(f, g\footnote{morphisms of categories}) = f
+\end{align*}
+Then,
+\begin{align*}
+  &\pi_0 : (-) \times (-) \stackrel{\cdot}{\rightarrow} Fst:Predom \times Predom \rightarrow Predom \\
+  &(\pi_0)_{P, P'} \in [P \times P' \rightarrow_C P] \\
+  &(\pi_0)_{P, P'} (a, b) = a
+\end{align*}
+\underline{exercise} Show that unit and $\pi_0$ are indeed natural transformation.
+
+\underline{exercise} $\pi_1, inj_0, inj_1$ are also natrual transformations if we pick appropriate functors. Find such functors.
+
+9. Notice that all of $unit, \pi_0, \pi_1, inj_0, inj_1$ do something very straightforward intuitively. They don't do any clever tricks. Naturality condition \ref{naturality} says in a sense that a natural transformation doesn't do anything clever. In more positive terms, it says that a natural transformation only performs canonical operations.
+\end{definition}
+\end{document}
