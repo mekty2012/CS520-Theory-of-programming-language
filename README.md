@@ -25,6 +25,4 @@ Lecture 10 : An Eager Functional Language (Ch11)
 
 Lecture 11 : Continuation in a Functional Language (Ch12)
 
-Lecture 12 : A Normal-Order Language
-
 I do not own any rights for this contents.
