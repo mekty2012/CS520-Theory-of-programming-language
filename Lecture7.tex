@@ -213,11 +213,13 @@ such that
 \begin{enumerate}
   \item for each object $x$ in $\mathcal{C}$, $\eta_x$ is a $\mathcal{D}$-morphism form $F(x)$ to $G(x)$
   \item for every morphism $f:x\rightarrow y$ in $\mathcal{C}$ (i.e. $f \in Hom_{\mathcal{C}}[x, y])$,
+
   \begin{tikzcd}
     F(x) \arrow[r, "\eta_x"] \arrow[d,"F(f)"]& G(x) \arrow[d,"G(f)"] \\
     F(y) \arrow[r,"\eta_y"] & G(y)
   \end{tikzcd}
-  This is called naturality condition \label{naturality}
+
+  This is called naturality condition
 \end{enumerate}
 7. One intuition is that $F$ and $G$ are type constructors, and $\eta$ is a polymorphic function from $F$ to $G$. Whenver we are given a type $x$, we have an instantiation of $\eta$ at $x$ that is a function from the type $F(x)$ to the type $G(x)$. The condition 1 says that $\eta$ should typecheck. The condition 2 says that what $\eta$ does at $x$ should be identical in a sense to what it does at $y$. In other words, $\eta$ should not depend much on its type parameter $x$. This is called uniformity.
 
@@ -242,6 +244,6 @@ Then,
 
 \underline{exercise} $\pi_1, inj_0, inj_1$ are also natrual transformations if we pick appropriate functors. Find such functors.
 
-9. Notice that all of $unit, \pi_0, \pi_1, inj_0, inj_1$ do something very straightforward intuitively. They don't do any clever tricks. Naturality condition \ref{naturality} says in a sense that a natural transformation doesn't do anything clever. In more positive terms, it says that a natural transformation only performs canonical operations.
+9. Notice that all of $unit, \pi_0, \pi_1, inj_0, inj_1$ do something very straightforward intuitively. They don't do any clever tricks. Naturality condition says in a sense that a natural transformation doesn't do anything clever. In more positive terms, it says that a natural transformation only performs canonical operations.
 \end{definition}
 \end{document}
