@@ -167,10 +167,10 @@ This means that all initial algebras of S are essentially the same, i.e. isomorp
 FV : free variables, e : integer expression, V : set of free variables in e.
 
 \begin{align*}
-    FV(c) = \o \text{ c is a constant}& FV(x) = \{x\} \text{ x is a variable}\\
-    FV(-e) = FV(e) & FV(e_1 + e_2) = FV(e_1) \cup FV(e_2)
+    FV(c) = \o \text{ c is a constant}\char`\& FV(x) = \{x\} \text{ x is a variable}\\
+    FV(-e) = FV(e) \char`\& FV(e_1 + e_2) = FV(e_1) \cup FV(e_2)
 \end{align*}
-3. Two features : case analysis, recursive calls on subphrases
+3. Two features : case analysis, recursive calls on subphrases\\
 4. $\interp{ - } \in \nonterminal{intexp} \rightarrow \Sigma \rightarrow \mathbb{Z}$
 
 where $\Sigma = \nonterminal{var} \rightarrow \mathbb{Z}$, a set of states $\sigma$.
@@ -214,7 +214,7 @@ That is, for each expression e, prove the property assuming that the property ho
 \begin{lemma}[Coincidence]
     For every expression e and states $\sigma, \sigma'$, \\
     if $\forall x\in FV(e) \sigma(x) = \sigma'(x) $ \\
-    then $\interp{ e } \sigma = \interp{ e } \sigma$
+    then $\interp{ e } \sigma = \interp{ e } \sigma'$
 \end{lemma}
 \begin{proof}
     By structural induction,
@@ -229,8 +229,8 @@ That is, for each expression e, prove the property assuming that the property ho
     \end{itemize}
 \end{proof}
 \begin{lemma}[Substitution]
-    If $\forall x. \sigma(x) = \interp{ \sigma(x) } \sigma' $ \\
-    $\interp{ \sfrac{e}{\delta} } \sigma' = \interp{ e } \delta$
+    If $\forall x.\ \sigma'(x) = \interp{ \delta(x) } \sigma $ \\
+    $\interp{ \sfrac{e}{\delta} } \sigma = \interp{ e } \sigma'$
 \end{lemma}
 \begin{proof}
     By structural induction.
